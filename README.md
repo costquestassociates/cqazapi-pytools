@@ -8,12 +8,12 @@
 
 To use the class, add it as a submodule to your project.
 ```bash
-git submodule add https://github.com/costquestassociates/cqazapi-usertools
+git submodule add https://github.com/costquestassociates/cqazapi-pytools
 ```
 
 Then you can use it via an import.
 ```python
-ch = importlib.import_module("cqazapi-helpers")
+ch = importlib.import_module("cqazapi-pytools")
 ```
 
 After that, you can access the functions. There are three functions of utility:
