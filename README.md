@@ -1,8 +1,10 @@
 # cqazapi-pytools
 
 * This is a python class providing easier access to CostQuest APIs.
-* The APIs are documented at https://developer.costquest.com
+* API definitions are at https://developer.costquest.com
 * Documentation is available at https://costquestassociates.github.com/cqazapi-documentation
+
+
 
 ## Usage
 
@@ -20,6 +22,8 @@ cp = cqpt.cqazapipytools(apikey)
 response = cp.apiAction('https://api.costquest.com/fabric/vintages', 'GET')
 print(response)
 ```
+
+
 
 ## Functions
 
