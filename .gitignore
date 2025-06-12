@@ -1,0 +1,68 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.eggs/
+dist/
+build/
+develop-eggs/
+parts/
+wheels/
+*.egg-info/
+sdist/
+*.whl
+pip-log.txt
+pip-delete-this.txt
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+*.env
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.log
+*.rpt
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.db
+*.sqlite3
+*.sqlite3-journal
+# Assuming you keep media/ in the repository:
+/media/
+# Likewise for static files (unless you use WhiteNoise or something similar):
+/static/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.sock
+
+# VS Code
+.vscode/
+
+# OS or Editor-specific files
+.DS_Store
+Thumbs.db
