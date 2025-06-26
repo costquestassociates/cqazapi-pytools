@@ -5,8 +5,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class cqazapipytools:
 
-    def __init__(self, apikey):
+    def __init__(self, apikey, baseurl = 'https://api.costquest.com/'):
         self.apikey = apikey
+        self.baseurl = baseurl
 
     def apiAction(self, url, method, in_json):
         starttime = time.time()
@@ -65,3 +66,16 @@ class cqazapipytools:
                     elif k not in merged_dict[key]:
                         merged_dict[key][k] = None
         return list(merged_dict.values())
+
+    def collect(self, vintage, geojson):
+        results = []
+        def doCollect(geojson):
+            curr_result = self.apiAction(self.baseurl + f'fabric/{vintage}/collect2', 'POST', geojson)
+            continuations = curr_result['continuations']
+            if continuations > 0:
+                for c in continuations:
+                    doCollect(c['body'])
+            else:
+                results.extend(curr_result['data'])
+        doCollect(geojson)
+        return results
