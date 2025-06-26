@@ -78,4 +78,4 @@ class cqazapipytools:
             else:
                 results.extend(curr_result['data'])
         doCollect(geojson)
-        return results
+        return list(set(results))
