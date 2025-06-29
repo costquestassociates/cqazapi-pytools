@@ -76,9 +76,8 @@ class cqazapipytools:
         results = []
         def doCollect(geojson):
             curr_result = self.apiAction(self.baseurl + f'fabric/{vintage}/collect2', 'POST', geojson)
-            continuations = curr_result['continuations']
-            if len(continuations) > 0:
-                for c in continuations:
+            if len(curr_result['continuations']) > 0:
+                for c in curr_result['continuations']:
                     doCollect(c['body'])
             else:
                 results.extend(curr_result['data'])
