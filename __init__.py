@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 import time
 import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,13 +13,16 @@ class cqazapipytools:
 
     def apiAction(self, url, method, in_json):
         starttime = time.time()
+        session = requests.Session().mount('https://',HTTPAdapter(headers={},max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])))
+        session.headers.update({'apikey': self.apikey})
         if method == 'GET':
-            response = requests.get(url, headers={"apikey": self.apikey})
+            response = requests.get(url)
         if method == 'POST':
-            response = requests.post(url, json=in_json, headers={"apikey": self.apikey})
+            response = requests.post(url, json=in_json)
         if response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
         endtime = time.time()
+        session.close()
         print(f"API request to {url} succeeded in {str(float(endtime-starttime))}s")
         return response.json()
 
