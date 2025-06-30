@@ -58,3 +58,10 @@ This is a poor mans "join" of data. Given a single list of dictionaries, it will
 * `property_name` must be a key present in all dictionaries in the `in_list`.
 
 An example of this would be passing in two lists with dictionaries at a `location_id` level that you want a single list of dictionaries with one location_id but all properties in the resulting dictionary for each id.
+
+
+### collect
+
+`collect(vintage, geojson)`
+
+Returns all fabric `uuids` that fall within the given geojson object.
