@@ -23,6 +23,11 @@ response = cp.apiAction('https://api.costquest.com/fabric/vintages', 'GET')
 print(response)
 ```
 
+To update the submodule
+```bash
+git submodule update --init --remote
+```
+
 
 
 ## Functions
