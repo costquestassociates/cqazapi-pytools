@@ -2,7 +2,7 @@
 
 * This is a python class providing easier access to CostQuest APIs.
 * API definitions are at https://developer.costquest.com
-* Documentation is available at https://costquestassociates.github.com/cqazapi-documentation
+* Documentation is available at https://costquestassociates.github.io/cqazapi-documentation
 
 
 
