@@ -18,9 +18,9 @@ class cqazapipytools:
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
         if method == 'GET':
-            response = requests.get(url)
+            response = session.get(url)
         if method == 'POST':
-            response = requests.post(url, json=in_json)
+            response = session.post(url, json=in_json)
         if response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
         endtime = time.time()
