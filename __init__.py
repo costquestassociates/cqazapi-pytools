@@ -17,9 +17,9 @@ class cqazapipytools:
         session = requests.Session()
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
-        if method == 'GET':
+        if method.upper() == 'GET':
             response = session.get(url)
-        if method == 'POST':
+        if method.upper() == 'POST':
             response = session.post(url, json=in_json)
         if response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
@@ -85,3 +85,12 @@ class cqazapipytools:
                 results.extend(curr_result['data'])
         doCollect(geojson)
         return list(set(results))
+    
+    def attach(self, vintage, in_list, fields, max_fields=5):
+        fieldgroups = self.chunkList(fields, max_fields)
+        results = []
+        for fg in fieldgroups:
+            fields = ','.join(fg)
+            for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list):
+                results.append(r)
+        return self.mergeList(results, 'uuid')

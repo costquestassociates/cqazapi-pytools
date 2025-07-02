@@ -70,3 +70,10 @@ An example of this would be passing in two lists with dictionaries at a `locatio
 `collect(vintage, geojson)`
 
 Returns all fabric `uuids` that fall within the given geojson object.
+
+
+### attach
+
+`attach(vintage, in_list, fields)`
+
+Attaches fabric data to a list of ids.
