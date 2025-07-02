@@ -13,7 +13,7 @@ class cqazapipytools:
 
     def apiAction(self, url, method, in_json):
         starttime = time.time()
-        session = requests.Session().mount('https://',HTTPAdapter(headers={},max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])))
+        session = requests.Session().mount('https://',HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])))
         session.headers.update({'apikey': self.apikey})
         if method == 'GET':
             response = requests.get(url)
