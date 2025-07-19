@@ -1,6 +1,7 @@
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
+import urllib.parse
 import time
 import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,13 +12,15 @@ class cqazapipytools:
         self.apikey = apikey
         self.baseurl = baseurl
 
-    def apiAction(self, url, method, in_json):
+    def apiAction(self, url, method, in_json = None):
         starttime = time.time()
         adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
         session = requests.Session()
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
         if method.upper() == 'GET':
+            if in_json is not None:
+                url += f"?{urllib.parse.urlencode(in_json)}"
             response = session.get(url)
         if method.upper() == 'POST':
             response = session.post(url, json=in_json)
