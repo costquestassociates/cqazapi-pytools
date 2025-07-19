@@ -20,7 +20,7 @@ class cqazapipytools:
         session.headers['apikey'] = self.apikey
         if method.upper() == 'GET':
             if in_json is not None:
-                url += f"?{urllib.parse.urlencode(in_json)}"
+                url += f"?{urllib.parse.urlencode(in_json[0])}"
             response = session.get(url)
         if method.upper() == 'POST':
             response = session.post(url, json=in_json)
