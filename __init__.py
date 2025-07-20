@@ -13,6 +13,8 @@ class cqazapipytools:
         self.baseurl = baseurl
 
     def apiAction(self, url, method, in_json = None):
+        if 'http' not in url:
+            url = f"{self.baseurl}{url}"
         starttime = time.time()
         adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
         session = requests.Session()
@@ -26,8 +28,8 @@ class cqazapipytools:
             response = session.post(url, json=in_json)
         if response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
-        endtime = time.time()
         session.close()
+        endtime = time.time()
         print(f"API request to {url} succeeded in {str(float(endtime-starttime))}s")
         return response.json()
 
