@@ -47,7 +47,7 @@ class cqazapipytools:
                     try:
                         chunk = q.get(block=False)
                         result = self.apiAction(url, method, chunk)
-                        results.append(result)
+                        results.extend(result)
                         q.task_done()
                     except queue.Empty:
                         break
