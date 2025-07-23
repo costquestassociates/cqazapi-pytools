@@ -23,7 +23,7 @@ class cqazapipytools:
         if method.upper() == 'GET':
             if in_json is not None:
                 if len(in_json[0]) > 0:
-                    beginstr = ''
+                    beginstr = '?'
                     if '?' in url:
                         beginstr = '&'
                     url += f"{beginstr}{urllib.parse.urlencode(in_json[0])}"
