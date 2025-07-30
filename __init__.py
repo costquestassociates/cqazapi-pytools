@@ -98,11 +98,11 @@ class cqazapipytools:
         doCollect(geojson)
         return list(set(results))
     
-    def attach(self, vintage, in_list, fields, max_fields=5):
+    def attach(self, vintage, in_list, fields, max_fields=5, layer='locations'):
         fieldgroups = self.chunkList(fields, max_fields)
         results = []
         for fg in fieldgroups:
             fields = ','.join(fg)
-            for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list):
+            for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list):
                 results.append(r)
         return self.mergeList(results, 'uuid')
