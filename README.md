@@ -44,7 +44,7 @@ This is used to make a single API call.
 
 ### apiBulkAction
 
-`apiBulkAction(url, method, in_list, *maxsize, *workers)`
+`bulkApiAction(url, method, in_list, *maxsize, *workers)`
 
 This will break up larger bulk requests into manageable parts as well as spawn concurrent workers to speed up retrieval.
 
@@ -74,6 +74,6 @@ Returns all fabric `uuid`s that fall within the given geojson object.
 
 ### attach
 
-`attach(vintage, in_list, fields)`
+`attach(vintage, in_list, fields, max_fields=5, layer='locations')`
 
-Attaches fabric data to a list of `uuid`s.
+Attaches data attributes to a list of `uuid`s. Do not change the `max_fields` from 5 as that is all the system supports.
