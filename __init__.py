@@ -114,7 +114,6 @@ class cqazapipytools:
                 results.append(r)
         return self.mergeList(results, 'uuid')
     
-    # in_list should be a list of dicts with format [{'sourcekey':'unique key','latitude':0,'longitude':0}]
     def locate(self, vintage, in_list, parceldistancem = None, neardistancem = None):
         for r in in_list:
             r['h3'] = h3.latlng_to_cell(float(r['latitude']), float(r['longitude']), 4)
