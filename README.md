@@ -94,3 +94,13 @@ Input format: `[{'sourcekey':'unique id','latitude':0,'longitude':0}]`
 Automatically breaks up data into manageable geographic areas for calling the `locate` API across varying geographic areas.
 
 Returns a list of dict.
+
+### match
+
+`match(vintage, in_list, maxsize=10, workers=16)`
+
+Input format: Either `[{"text":"unparsed address"}]` or `[{"house_number":"house_number","road":"road","unit":"unit","city":"city","state":"state","postcode":"postcode"}]`
+
+Performs address matching. Note that the `in_list` can be components or a full address.
+
+Returns a list of dict.

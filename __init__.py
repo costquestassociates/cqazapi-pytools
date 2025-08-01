@@ -136,3 +136,7 @@ class cqazapipytools:
         for h3u in h3_unique:
             results += self.bulkApiAction(f'{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}', 'POST', h3_unique[h3u])
         return results
+
+    def match(self, vintage, in_list, maxsize=10, workers=16):
+        results = self.bulkApiAction(f'testing/{vintage}/match', 'POST', in_list, maxsize=10, workers=16)
+        return results
