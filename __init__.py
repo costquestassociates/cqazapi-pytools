@@ -16,7 +16,7 @@ class cqazapipytools:
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
-        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
+        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504]))
         session = requests.Session()
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
@@ -30,12 +30,18 @@ class cqazapipytools:
             response = session.get(url)
         if method.upper() == 'POST':
             response = session.post(url, json=in_json)
-        if response.status_code != 200:
+        if response.status_code == 429:
+            retryafter = int(response.headers['Retry-After']) + 1
+            print(f'Rate limiting encountered, waiting for {retryafter}')
+            time.sleep(retryafter)
+            return self.apiAction(url, method, in_json)
+        elif response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
-        session.close()
-        endtime = time.time()
-        print(f"API request to {url} succeeded in {str(float(endtime-starttime))}s")
-        return response.json()
+        else:
+            session.close()
+            endtime = time.time()
+            print(f"API request to {url} succeeded in {str(float(endtime-starttime))}s")
+            return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize=1000, workers=4):
         results = []
@@ -98,11 +104,11 @@ class cqazapipytools:
         doCollect(geojson)
         return list(set(results))
     
-    def attach(self, vintage, in_list, fields, max_fields=5, layer='locations'):
+    def attach(self, vintage, in_list, fields, max_fields=5):
         fieldgroups = self.chunkList(fields, max_fields)
         results = []
         for fg in fieldgroups:
             fields = ','.join(fg)
-            for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list):
+            for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list):
                 results.append(r)
         return self.mergeList(results, 'uuid')
