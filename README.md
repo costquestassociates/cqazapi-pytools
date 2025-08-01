@@ -69,11 +69,28 @@ An example of this would be passing in two lists with dictionaries at a `locatio
 
 `collect(vintage, geojson)`
 
-Returns all fabric `uuid`s that fall within the given geojson object.
+Input format: Valid GeoJSON.
+
+Returns a list of all fabric `uuid`s that fall within the given geojson object.
 
 
 ### attach
 
 `attach(vintage, in_list, fields, max_fields=5, layer='locations')`
 
+Input format: `['uuid1','uuid2']`
+
 Attaches data attributes to a list of `uuid`s. Do not change the `max_fields` from 5 as that is all the system supports.
+
+Returns a list of dict.
+
+
+### locate
+
+`locate(vintage, in_list, fields, parceldistancem=None, neardistancem=None)`
+
+Input format: `[{'sourcekey':'unique id','latitude':0,'longitude':0}]`
+
+Automatically breaks up data into manageable geographic areas for calling the `locate` API across varying geographic areas.
+
+Returns a list of dict.
