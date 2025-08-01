@@ -124,6 +124,7 @@ class cqazapipytools:
             if r['h3'] not in h3_unique.keys():
                 h3_unique[r['h3']] = []
             h3_unique[r['h3']].append(r)
+        print(f"Locating across {len(h3_unique)} areas")
         results = []
         qs = {}
         if not parceldistancem is None:
