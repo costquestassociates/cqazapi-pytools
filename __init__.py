@@ -5,6 +5,7 @@ import urllib.parse
 import time
 import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import h3
 
 class cqazapipytools:
 
@@ -112,3 +113,26 @@ class cqazapipytools:
             for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list):
                 results.append(r)
         return self.mergeList(results, 'uuid')
+    
+    # in_list should be a list of dicts with format [{'sourcekey':'unique key','latitude':0,'longitude':0}]
+    def locate(self, vintage, in_list, parceldistancem = None, neardistancem = None):
+        for r in in_list:
+            r['h3'] = h3.latlng_to_cell(float(r['latitude']), float(r['longitude']), 4)
+        h3_merged = in_list
+        h3_unique = {}
+        for r in h3_merged:
+            if r['h3'] not in h3_unique.keys():
+                h3_unique[r['h3']] = []
+            h3_unique[r['h3']].append(r)
+        results = []
+        qs = {}
+        if not parceldistancem is None:
+            qs['parceldistancem'] = str(parceldistancem)
+        if not neardistancem is None:
+            qs['neardistancem'] = str(neardistancem)
+        q = ''
+        if len(qs) > 0:
+            q = '?'
+        for h3u in h3_unique:
+            results += self.bulkApiAction(f'{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}', 'POST', h3_unique[h3u])
+        return results
