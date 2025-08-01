@@ -138,5 +138,5 @@ class cqazapipytools:
         return results
 
     def match(self, vintage, in_list, maxsize=10, workers=16):
-        results = self.bulkApiAction(f'testing/{vintage}/match', 'POST', in_list, maxsize=10, workers=16)
+        results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, maxsize=10, workers=16)
         return results
