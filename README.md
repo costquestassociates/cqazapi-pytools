@@ -99,7 +99,7 @@ Returns a list of dict.
 
 `match(vintage, in_list, maxsize=10, workers=16)`
 
-Input format: Either `[{"text":"unparsed address"}]` or `[{"house_number":"house_number","road":"road","unit":"unit","city":"city","state":"state","postcode":"postcode"}]`
+Input format: Either `[{'sourcekey':'unique id','text':'unparsed address'}]` or `[{'sourcekey':'unique id','house_number':'house_number','road':'road','unit':'unit','city':'city','state':'state','postcode':'postcode'}]`
 
 Performs address matching. Note that the `in_list` can be components or a full address.
 
