@@ -16,7 +16,7 @@ class cqazapipytools:
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
-        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504]))
+        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504]))
         session = requests.Session()
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
