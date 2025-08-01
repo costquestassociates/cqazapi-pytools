@@ -42,7 +42,7 @@ This is used to make a single API call.
 * `body` is a python object being of type `list` or `dict` mirroring the JSON types of `array` and `object`.
 
 
-### apiBulkAction
+### bulkApiAction
 
 `bulkApiAction(url, method, in_list, *maxsize, *workers)`
 
