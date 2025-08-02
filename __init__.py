@@ -41,10 +41,12 @@ class cqazapipytools:
         else:
             session.close()
             endtime = time.time()
-            print(f"API request to {url} succeeded in {str(float(endtime-starttime))}s")
+            print(f"API request to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize=1000, workers=4):
+        if method == 'GET':
+            maxsize = 1
         results = []
         if len(in_list) < maxsize:
             results = self.apiAction(url, method, in_list)
@@ -114,9 +116,11 @@ class cqazapipytools:
                 results.append(r)
         return self.mergeList(results, 'uuid')
     
-    def locate(self, vintage, in_list, parceldistancem = None, neardistancem = None):
-        for r in in_list:
-            r['h3'] = h3.latlng_to_cell(float(r['latitude']), float(r['longitude']), 4)
+    def locate(self, vintage, in_list, optimize_threshold = 0.5, parceldistancem = None, neardistancem = None, workers=4):
+        if optimize_threshold < 1:
+            credit_cost = int(self.apiAction(f"accesscontrol/getweight?{urllib.parse.urlencode({'api':'fabricext','operation':'locate','method':'POST'})}", 'GET')['credits'])
+        for loc in in_list:
+            loc['h3'] = h3.latlng_to_cell(float(loc['latitude']), float(loc['longitude']), 4)
         h3_merged = in_list
         h3_unique = {}
         for r in h3_merged:
@@ -127,16 +131,19 @@ class cqazapipytools:
         results = []
         qs = {}
         if not parceldistancem is None:
-            qs['parceldistancem'] = str(parceldistancem)
+            qs['parceldistancem'] = parceldistancem
         if not neardistancem is None:
-            qs['neardistancem'] = str(neardistancem)
+            qs['neardistancem'] = neardistancem
         q = ''
         if len(qs) > 0:
             q = '?'
         for h3u in h3_unique:
-            results += self.bulkApiAction(f'{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}', 'POST', h3_unique[h3u])
+            if len(h3_unique[h3u]) < credit_cost * optimize_threshold:
+                results += self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', h3_unique[h3u], workers=workers)
+            else:
+                results += self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], workers=workers)
         return results
 
     def match(self, vintage, in_list, maxsize=10, workers=16):
-        results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, maxsize=10, workers=16)
+        results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, maxsize=maxsize, workers=workers)
         return results

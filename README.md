@@ -13,7 +13,7 @@ To use the class, add it as a submodule to your project.
 git submodule add https://github.com/costquestassociates/cqazapi-pytools
 ```
 
-Then you can use it via an import. After that, you can access the functions after instantiating the class.
+Then you can use it via an import. You can  then access the functions after instantiating the class.
 ```python
 import importlib
 cqpt = importlib.import_module("cqazapi-pytools")
@@ -23,7 +23,7 @@ response = cp.apiAction('https://api.costquest.com/fabric/vintages', 'GET')
 print(response)
 ```
 
-To update the submodule
+To get updates, you can do so by updating the submodule in the parent repository.
 ```bash
 git submodule update --init --remote
 ```
@@ -76,24 +76,31 @@ Returns a list of all fabric `uuid`s that fall within the given geojson object.
 
 ### attach
 
-`attach(vintage, in_list, fields, max_fields=5, layer='locations')`
+`attach(vintage, in_list, fields, *layer)`
 
 Input format: `['uuid1','uuid2']`
 
-Attaches data attributes to a list of `uuid`s. Do not change the `max_fields` from 5 as that is all the system supports.
-
 Returns a list of dict.
+
+Attaches data attributes to a list of `uuid`s.
+
+`layer` defaults to `locations`.
 
 
 ### locate
 
-`locate(vintage, in_list, fields, parceldistancem=None, neardistancem=None)`
+`locate(vintage, in_list, fields, *opt_tolerance, *parceldistancem, *neardistancem)`
 
 Input format: `[{'sourcekey':'unique id','latitude':0,'longitude':0}]`
 
+Returns a list of dict.
+
 Automatically breaks up data into manageable geographic areas for calling the `locate` API across varying geographic areas.
 
-Returns a list of dict.
+Since the `locate` API can only operate on data that spans less than 10,000 square kilometers there is a trade off when breaking up data spatially. The locate function within these tools will assign data to h3_4's and then bulk process within each of those. This works very well for densely clustered data, but poorly for sparse disparate data.
+
+To address the challenge of dealing with disparate data, the `opt_tolerance` value defaults to 0.5 and can be set between 0 and 1. At 0, no optimization to preserve credits is performed and the process will be the fastest. At 1, the process optimizes to preserve as many credits as possible by calling the `GET` variant of the `locate` API leading to slow run times but less credit usage.
+
 
 ### match
 
@@ -101,6 +108,6 @@ Returns a list of dict.
 
 Input format: Either `[{'sourcekey':'unique id','text':'unparsed address'}]` or `[{'sourcekey':'unique id','house_number':'house_number','road':'road','unit':'unit','city':'city','state':'state','postcode':'postcode'}]`
 
-Performs address matching. Note that the `in_list` can be components or a full address.
-
 Returns a list of dict.
+
+Performs address matching. Note that the `in_list` can be components or a full address.
