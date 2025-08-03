@@ -32,7 +32,7 @@ class cqazapipytools:
         if method.upper() == 'POST':
             response = session.post(url, json=in_json)
         if response.status_code == 429:
-            retryafter = int(response.headers['Retry-After']) + 1
+            retryafter = int(response.headers.get('Retry-After', 60)) + 1
             print(f'Rate limiting encountered, waiting for {retryafter}s')
             time.sleep(retryafter)
             return self.apiAction(url, method, in_json)
