@@ -112,12 +112,12 @@ class cqazapipytools:
         doCollect(geojson)
         return list(set(results))
     
-    def attach(self, vintage, in_list, fields):
+    def attach(self, vintage, in_list, fields, workers=4):
         fieldgroups = self.chunkList(fields, 5)
         results = []
         for fg in fieldgroups:
             fields = ','.join(fg)
-            results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, 1000))
+            results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, 1000, workers))
         return self.mergeList(results, 'uuid')
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
@@ -146,12 +146,12 @@ class cqazapipytools:
                 for r in h3_unique[h3u]:
                     single_requests.append(r)
             else:
-                results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], 1000, workers=workers))
-        results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers=workers))
+                results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], 1000, workers))
+        results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers))
         return results
 
     def match(self, vintage, in_list, workers=16):
         if len(in_list) < self.getCredits('fabricext','match','POST'):
-            return self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, maxsize=10, workers=workers)
+            return self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
         else:
-            return self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, maxsize=10, workers=workers)
+            return self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, 10, workers)
