@@ -12,6 +12,7 @@ class cqazapipytools:
     def __init__(self, apikey, baseurl = 'https://api.costquest.com/'):
         self.apikey = apikey
         self.baseurl = baseurl
+        self.listapis = self.apiAction('accesscontrol/listapis', 'GET')
 
     def apiAction(self, url, method, in_json = None):
         if 'http' not in url:
@@ -98,7 +99,9 @@ class cqazapipytools:
         return list(merged_dict.values())
 
     def getCredits(self, api, operation, method):
-        return int(self.apiAction(f"accesscontrol/getweight?{urllib.parse.urlencode({'api':api,'operation':operation,'method':method.upper()})}", 'GET')['credits'])
+        for a in self.listapis:
+            if a['api'] == api and a['operation'] == operation and a['method'] == method:
+                return a['credits']
 
     def collect(self, vintage, geojson):
         results = []
