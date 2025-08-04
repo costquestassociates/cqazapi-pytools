@@ -28,6 +28,16 @@ To get updates, you can do so by updating the submodule in the parent repository
 git submodule update --init --remote
 ```
 
+There are a few options when instantiating:
+`cqazapipytools(apikey, baseurl='https://api.costquest.com', usecache=True, cachepath='cache.db')`
+* Must provide a valid CostQuest API key.
+* Leave baseurl as default, typically.
+* `usecache` defaults to True. This means that requests will be saved in a local sqlite database to avoid making the same request again. This helps when designing a process so as to not continually make the same requests and use credits needlessly.
+  * It's up to the user to manage the cache. Fabric data is stable within a vintage, so cache TTL can be nearly infinite as long as the same requests are being made.
+  * The cache can become very large. Consider having different cache files for different projects. Also consider using `clearCache()` or simply dropping the sqlite file when no longer needed.
+  * If `usecache` is false no local cache will be used.
+* `cachepath` defaults to a file named `cache.db` in the current working directory but can be customized to any path.
+
 
 
 ## Functions

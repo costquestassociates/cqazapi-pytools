@@ -7,20 +7,59 @@ import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import h3
 import math
+import sqlite3
+import json
+import os
 
 class cqazapipytools:
 
-    def __init__(self, apikey, baseurl = 'https://api.costquest.com/'):
+    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', usecache = True, cachepath = 'cache.db'):
         self.apikey = apikey
         self.baseurl = baseurl
         self.count = 0
         self.total = 0
+        self.usecache = usecache
+        self.cachepath = cachepath
+        if self.usecache:
+            self.createCache()
         self.listapis = self.apiAction('accesscontrol/listapis', 'GET')
+    
+    def clearCache(self):
+       if os.path.exists(self.cachepath):
+            os.remove(self.cachepath)
+    
+    def createCache(self):
+        with sqlite3.connect(self.cachepath) as cn:
+            cn = sqlite3.connect(self.cachepath)
+            cr = cn.cursor()
+            cr.execute('create table if not exists cache (url text, method text, body text, response text)')
+            cn.commit()
+    
+    def saveCache(self, url, method, body, response):
+        with sqlite3.connect(self.cachepath) as cn:
+            cur = cn.cursor()
+            cur.execute('insert into cache (url,method,body,response) values (?,?,?,?)', (url, method, json.dumps(body), json.dumps(response),))
+            cn.commit()
+
+    def loadCache(self, url, method, body):
+        with sqlite3.connect(self.cachepath) as cn:
+            cr = cn.cursor()
+            cr.execute('select response from cache where url=? and method=? and body=?', (url, method, json.dumps(body),))
+            r = cr.fetchone()
+            if not r is None:
+                return json.loads(r[0])
 
     def apiAction(self, url, method, in_json = None):
+        starttime = time.time()
+        self.count += 1
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
-        starttime = time.time()
+        if not self.nocache:
+            cache_result = self.loadCache(url, method, in_json)
+            if not cache_result is None:
+                endtime = time.time()
+                print(f"API request ({self.count}/{self.total}) to CACHE {url} succeeded in {str(round(float(endtime-starttime),3))}s")
+                return cache_result
         adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
         session = requests.Session()
         session.mount('https://', adapter)
@@ -45,8 +84,9 @@ class cqazapipytools:
         else:
             session.close()
             endtime = time.time()
-            self.count += 1
             print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
+            if not self.nocache:
+                self.saveCache(url, method, in_json, response.json())
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize, workers=4):
