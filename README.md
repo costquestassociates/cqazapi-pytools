@@ -44,6 +44,7 @@ Certain functions re-use the same input parameters.
 
 `apiAction(url, method, body)`
 * `body` is a python object being of type `list` or `dict` mirroring the JSON types of `array` and `object`. If `body` is provided for a `GET` request, it should be a dictionary and will be converted to query string parameters.
+
 Returns an API response-like object.
 
 This is used to make a single API call.
@@ -56,6 +57,7 @@ This is used to make a single API call.
 * `in_list` must be a list of items. It can be of any size.
 * `maxsize` is the maximum number of items to request at once to a bulk/`POST` API.
 * `workers` is the number of parallel requests to perform. It defaults to 4.
+
 Returns a list.
 
 This will break up larger bulk requests into batches as well as spawn concurrent workers to speed up retrieval.
@@ -67,6 +69,7 @@ This will break up larger bulk requests into batches as well as spawn concurrent
 `mergeList(in_list, property_name)`
 * `in_list` must be of type `list` and it must contain entries of type `dict`.
 * `property_name` must be a key present in all dictionaries in the `in_list`.
+
 Returns a list of dict.
 
 This is a poor mans "join" of data. Given a single list of dictionaries, it will combine them on the chosen property based on dictionary keys. An example of this would be passing in two lists with dictionaries at a `location_id` level that you want a single list of dictionaries with one `location_id` but all properties in the resulting dictionary for each id.
@@ -77,6 +80,7 @@ This is a poor mans "join" of data. Given a single list of dictionaries, it will
 
 `collect(vintage, geojson)`
 * `geojson` is a valid GeoJSON object.
+
 Returns a list of all fabric `uuid`s that fall within the given geojson object.
 
 
@@ -87,6 +91,7 @@ Returns a list of all fabric `uuid`s that fall within the given geojson object.
 * `in_list` is a list of form `['uuid1','uuid2']`.
 * `fields` is a list of fields to attach of form `['location_id','latitude','longitude']`.
 * `layer` is the layer type, it defaults to `locations`. Valid layers can be identified using the `fabric/layers` endpoint.
+
 Returns a list of dict.
 
 Attaches data attributes to a list of `uuid`s.
@@ -100,6 +105,7 @@ Attaches data attributes to a list of `uuid`s.
 * `opt_tolerance` is a value between 0 and 1. It defaults to 0.5.
 * `parceldistancem` see API documentation.
 * `neardistancem` see API documentation.
+
 Returns a list of dict.
 
 Automatically breaks up data into manageable geographic areas for calling the `locate` API across varying geographic areas.
@@ -115,6 +121,7 @@ To address the challenge of dealing with disparate data, the `opt_tolerance` val
 
 `match(vintage, in_list, workers=16)`
 * `in_list` is a list with a format of either `[{'sourcekey':'unique id','text':'unparsed address'}]` or `[{'sourcekey':'unique id','house_number':'house_number','road':'road','unit':'unit','city':'city','state':'state','postcode':'postcode'}]`.
+
 Returns a list of dict.
 
 Performs address matching. Note that the `in_list` can be components or a full address.
