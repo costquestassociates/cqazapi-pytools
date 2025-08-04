@@ -52,9 +52,9 @@ This is used to make a single API call.
 
 ### bulkApiAction
 
-`bulkApiAction(url, method, in_list, *maxsize, *workers)`
+`bulkApiAction(url, method, in_list, maxsize, *workers)`
 * `in_list` must be a list of items. It can be of any size.
-* `maxsize` is the maximum number of items to request at once to an API. It defaults to 1,000.
+* `maxsize` is the maximum number of items to request at once to a bulk/`POST` API.
 * `workers` is the number of parallel requests to perform. It defaults to 4.
 Returns a list.
 
@@ -113,7 +113,7 @@ To address the challenge of dealing with disparate data, the `opt_tolerance` val
 
 ### match
 
-`match(vintage, in_list, maxsize=10, workers=16)`
+`match(vintage, in_list, workers=16)`
 * `in_list` is a list with a format of either `[{'sourcekey':'unique id','text':'unparsed address'}]` or `[{'sourcekey':'unique id','house_number':'house_number','road':'road','unit':'unit','city':'city','state':'state','postcode':'postcode'}]`.
 Returns a list of dict.
 

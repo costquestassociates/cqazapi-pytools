@@ -44,10 +44,12 @@ class cqazapipytools:
             print(f"API request to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
             return response.json()
 
-    def bulkApiAction(self, url, method, in_list, maxsize=1000, workers=4):
+    def bulkApiAction(self, url, method, in_list, maxsize, workers=4):
+        results = []
+        if len(in_list) == 0:
+            return results
         if method == 'GET':
             maxsize = 1
-        results = []
         if len(in_list) < maxsize:
             results = self.apiAction(url, method, in_list)
         else:
@@ -95,6 +97,9 @@ class cqazapipytools:
                         merged_dict[key][k] = None
         return list(merged_dict.values())
 
+    def getCredits(self, api, operation, method):
+        return int(self.apiAction(f"accesscontrol/getweight?{urllib.parse.urlencode({'api':api,'operation':operation,'method':method.upper()})}", 'GET')['credits'])
+
     def collect(self, vintage, geojson):
         results = []
         def doCollect(geojson):
@@ -107,18 +112,15 @@ class cqazapipytools:
         doCollect(geojson)
         return list(set(results))
     
-    def attach(self, vintage, in_list, fields, max_fields=5):
-        fieldgroups = self.chunkList(fields, max_fields)
+    def attach(self, vintage, in_list, fields):
+        fieldgroups = self.chunkList(fields, 5)
         results = []
         for fg in fieldgroups:
             fields = ','.join(fg)
-            for r in self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list):
-                results.append(r)
+            results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, 1000))
         return self.mergeList(results, 'uuid')
     
-    def locate(self, vintage, in_list, optimize_threshold = 0.5, parceldistancem = None, neardistancem = None, workers=4):
-        if optimize_threshold < 1:
-            credit_cost = int(self.apiAction(f"accesscontrol/getweight?{urllib.parse.urlencode({'api':'fabricext','operation':'locate','method':'POST'})}", 'GET')['credits'])
+    def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for loc in in_list:
             loc['h3'] = h3.latlng_to_cell(float(loc['latitude']), float(loc['longitude']), 4)
         h3_merged = in_list
@@ -127,7 +129,7 @@ class cqazapipytools:
             if r['h3'] not in h3_unique.keys():
                 h3_unique[r['h3']] = []
             h3_unique[r['h3']].append(r)
-        print(f"Locating across {len(h3_unique)} areas")
+        print(f"Locating across {len(h3_unique)} h3_4s")
         results = []
         qs = {}
         if not parceldistancem is None:
@@ -137,13 +139,19 @@ class cqazapipytools:
         q = ''
         if len(qs) > 0:
             q = '?'
+        credit_cost = self.getCredits('fabricext','locate','POST')
+        single_requests = []
         for h3u in h3_unique:
-            if len(h3_unique[h3u]) < credit_cost * optimize_threshold:
-                results += self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', h3_unique[h3u], workers=workers)
+            if len(h3_unique[h3u]) < credit_cost * opt_tolerance:
+                for r in h3_unique[h3u]:
+                    single_requests.append(r)
             else:
-                results += self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], workers=workers)
+                results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], 1000, workers=workers))
+        results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers=workers))
         return results
 
-    def match(self, vintage, in_list, maxsize=10, workers=16):
-        results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, maxsize=maxsize, workers=workers)
-        return results
+    def match(self, vintage, in_list, workers=16):
+        if len(in_list) < self.getCredits('fabricext','match','POST'):
+            return self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, maxsize=10, workers=workers)
+        else:
+            return self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, maxsize=10, workers=workers)
