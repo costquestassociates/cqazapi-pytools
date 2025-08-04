@@ -6,19 +6,22 @@ import time
 import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import h3
+import math
 
 class cqazapipytools:
 
     def __init__(self, apikey, baseurl = 'https://api.costquest.com/'):
         self.apikey = apikey
         self.baseurl = baseurl
+        self.count = 0
+        self.total = 0
         self.listapis = self.apiAction('accesscontrol/listapis', 'GET')
 
     def apiAction(self, url, method, in_json = None):
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
-        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504], allowed_methods=['GET','POST']))
+        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
         session = requests.Session()
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
@@ -42,10 +45,12 @@ class cqazapipytools:
         else:
             session.close()
             endtime = time.time()
-            print(f"API request to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
+            self.count += 1
+            print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize, workers=4):
+        self.count = 0
         results = []
         if len(in_list) == 0:
             return results
@@ -55,6 +60,7 @@ class cqazapipytools:
             results = self.apiAction(url, method, in_list)
         else:
             chunks = self.chunkList(in_list, maxsize)
+            self.total = len(chunks)
             q = queue.Queue()
             for chunk in chunks:
                 q.put(chunk)
@@ -121,12 +127,25 @@ class cqazapipytools:
         return list(set(results))
     
     def attach(self, vintage, in_list, fields, workers=4):
-        fieldgroups = self.chunkList(fields, 5)
-        results = []
-        for fg in fieldgroups:
-            fields = ','.join(fg)
-            results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
-        return self.mergeList(results, 'uuid')
+        if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
+            if 'uuid' not in fields:
+                fields.append('uuid')
+            get_in_list = []
+            for l in in_list:
+                get_in_list.append({'uuid':l})
+            results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/locations', 'GET', get_in_list, 1, workers)
+            for r in results:
+                for k in list(r.keys()):
+                    if k not in fields:
+                        r.pop(k, None)
+            return results
+        else:
+            fieldgroups = self.chunkList(fields, 5)
+            results = []
+            for fg in fieldgroups:
+                fields = ','.join(fg)
+                results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
+            return self.mergeList(results, 'uuid')
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for loc in in_list:
