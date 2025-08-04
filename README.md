@@ -17,11 +17,11 @@ To use the class, add it as a submodule to your project.
 git submodule add https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
 ```
 
-Then you can use it via an import. You can  then access the functions after instantiating the class.
+Usage is as simple as importing and then instantiating.
 ```python
 from cqazapipytools import *
 cp = cqazapipytools(apikey)
-response = cp.apiAction('https://api.costquest.com/fabric/vintages', 'GET')
+response = cp.apiAction('fabric/vintages', 'GET')
 print(response)
 ```
 
