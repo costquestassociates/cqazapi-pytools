@@ -54,7 +54,7 @@ class cqazapipytools:
         self.count += 1
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
-        if not self.nocache:
+        if self.usecache:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
                 endtime = time.time()
@@ -85,7 +85,7 @@ class cqazapipytools:
             session.close()
             endtime = time.time()
             print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
-            if not self.nocache:
+            if self.usecache:
                 self.saveCache(url, method, in_json, response.json())
             return response.json()
 
