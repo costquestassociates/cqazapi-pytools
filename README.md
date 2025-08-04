@@ -4,21 +4,23 @@
 * API definitions are at https://developer.costquest.com
 * Documentation is available at https://apidocs.costquest.com
 
+## Issues / Bugs
+
+Please create an issue on this GitHub page for any problems or bugs.
+
 
 
 ## Usage
 
 To use the class, add it as a submodule to your project.
 ```bash
-git submodule add https://github.com/costquestassociates/cqazapi-pytools
+git submodule add https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
 ```
 
 Then you can use it via an import. You can  then access the functions after instantiating the class.
 ```python
-import importlib
-cqpt = importlib.import_module("cqazapi-pytools")
-
-cp = cqpt.cqazapipytools(apikey)
+from cqazapipytools import *
+cp = cqazapipytools(apikey)
 response = cp.apiAction('https://api.costquest.com/fabric/vintages', 'GET')
 print(response)
 ```
