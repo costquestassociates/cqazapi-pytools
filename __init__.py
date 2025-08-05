@@ -37,22 +37,34 @@ class cqazapipytools:
             cr.execute('create index if not exists hashvalue_index on cache (hashvalue)')
             cn.commit()
     
-    def saveCache(self, url, method, body, response):
+    def saveCache(self, url, method, data, response):
+        body_string = ""
+        if method.upper() != 'GET':
+            try:
+                body_string = json.dumps(data)
+            except:
+                pass
         with sqlite3.connect(self.cachepath) as cn:
             cur = cn.cursor()
-            cur.execute('insert into cache (hashvalue,response) values (?,?)', (self.createHash(f"{url}_{method}_{json.dumps(body)}",), json.dumps(response),))
+            cur.execute('insert into cache (hashvalue,response) values (?,?)', (self.createHash(f"{url}_{method}_{body_string}"), json.dumps(response),))
             cn.commit()
 
-    def loadCache(self, url, method, body):
+    def loadCache(self, url, method, data):
+        body_string = ""
+        if method.upper() != 'GET':
+            try:
+                body_string = json.dumps(data)
+            except:
+                pass
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
-            cr.execute('select response from cache where hashvalue=?', (self.createHash(f"{url}_{method}_{json.dumps(body)}",),))
+            cr.execute('select response from cache where hashvalue=?', (self.createHash(f"{url}_{method}_{body_string}"),))
             r = cr.fetchone()
             if not r is None:
                 return json.loads(r[0])
     
-    def createHash(self, input):
-        return hashlib.sha1(input.encode()).hexdigest()
+    def createHash(self, data):
+        return hashlib.sha1(data.encode()).hexdigest()
 
     def apiAction(self, url, method, in_json=None, usecache=None):
         action_usecache = self.usecache
@@ -61,6 +73,13 @@ class cqazapipytools:
         starttime = time.time()
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
+        if method.upper() == 'GET':
+            if in_json is not None:
+                if len(in_json[0]) > 0:
+                    beginstr = '?'
+                    if '?' in url:
+                        beginstr = '&'
+                    url += f"{beginstr}{urllib.parse.urlencode(in_json[0])}"
         if action_usecache:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
@@ -73,12 +92,6 @@ class cqazapipytools:
         session.mount('https://', adapter)
         session.headers['apikey'] = self.apikey
         if method.upper() == 'GET':
-            if in_json is not None:
-                if len(in_json[0]) > 0:
-                    beginstr = '?'
-                    if '?' in url:
-                        beginstr = '&'
-                    url += f"{beginstr}{urllib.parse.urlencode(in_json[0])}"
             response = session.get(url)
         if method.upper() == 'POST':
             response = session.post(url, json=in_json)
