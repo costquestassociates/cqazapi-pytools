@@ -38,33 +38,27 @@ class cqazapipytools:
             cn.commit()
     
     def saveCache(self, url, method, data, response):
-        body_string = ""
-        if method.upper() != 'GET':
-            try:
-                body_string = json.dumps(data)
-            except:
-                pass
         with sqlite3.connect(self.cachepath) as cn:
             cur = cn.cursor()
-            cur.execute('insert into cache (hashvalue,response) values (?,?)', (self.createHash(f"{url}_{method}_{body_string}"), json.dumps(response),))
+            cur.execute('insert into cache (hashvalue,response) values (?,?)', (self.createHash(url,method,data), json.dumps(response),))
             cn.commit()
 
     def loadCache(self, url, method, data):
-        body_string = ""
-        if method.upper() != 'GET':
-            try:
-                body_string = json.dumps(data)
-            except:
-                pass
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
-            cr.execute('select response from cache where hashvalue=?', (self.createHash(f"{url}_{method}_{body_string}"),))
+            cr.execute('select response from cache where hashvalue=?', (self.createHash(url,method,data),))
             r = cr.fetchone()
             if not r is None:
                 return json.loads(r[0])
     
-    def createHash(self, data):
-        return hashlib.sha1(data.encode()).hexdigest()
+    def createHash(self, url, method, data):
+        data_string = ""
+        try:
+            data_string = json.dumps(data)
+        except:
+            pass
+        hashstr = f"{url}_{method}_{data_string}"
+        return hashlib.sha1(hashstr.encode()).hexdigest()
 
     def apiAction(self, url, method, in_json=None, usecache=None):
         action_usecache = self.usecache
