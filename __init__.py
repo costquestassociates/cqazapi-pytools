@@ -65,6 +65,7 @@ class cqazapipytools:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
                 endtime = time.time()
+                self.count += 1
                 print(f"API request ({self.count}/{self.total}) to CACHE {url} succeeded in {str(round(float(endtime-starttime),3))}s")
                 return cache_result
         adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
