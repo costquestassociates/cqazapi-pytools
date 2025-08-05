@@ -10,6 +10,7 @@ import math
 import sqlite3
 import json
 import os
+import hashlib
 
 class cqazapipytools:
 
@@ -22,7 +23,7 @@ class cqazapipytools:
         self.cachepath = cachepath
         if self.usecache:
             self.createCache()
-        self.listapis = self.apiAction('accesscontrol/listapis', 'GET')
+        self.listapis = self.apiAction('accountcontrol/listapis', 'GET', usecache=False)
     
     def clearCache(self):
        if os.path.exists(self.cachepath):
@@ -32,29 +33,36 @@ class cqazapipytools:
         with sqlite3.connect(self.cachepath) as cn:
             cn = sqlite3.connect(self.cachepath)
             cr = cn.cursor()
-            cr.execute('create table if not exists cache (url text, method text, body text, response text)')
+            cr.execute('create table if not exists cache (hashvalue text, response text)')
+            cr.execute('create index if not exists hashvalue_index on cache (hashvalue)')
             cn.commit()
     
     def saveCache(self, url, method, body, response):
         with sqlite3.connect(self.cachepath) as cn:
             cur = cn.cursor()
-            cur.execute('insert into cache (url,method,body,response) values (?,?,?,?)', (url, method, json.dumps(body), json.dumps(response),))
+            cur.execute('insert into cache (hashvalue,response) values (?,?)', (self.createHash(f"{url}_{method}_{json.dumps(body)}",), json.dumps(response),))
             cn.commit()
 
     def loadCache(self, url, method, body):
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
-            cr.execute('select response from cache where url=? and method=? and body=?', (url, method, json.dumps(body),))
+            cr.execute('select response from cache where hashvalue=?', (self.createHash(f"{url}_{method}_{json.dumps(body)}",),))
             r = cr.fetchone()
             if not r is None:
                 return json.loads(r[0])
+    
+    def createHash(self, input):
+        return hashlib.sha1(input.encode()).hexdigest()
 
-    def apiAction(self, url, method, in_json = None):
+    def apiAction(self, url, method, in_json=None, usecache=None):
+        action_usecache = self.usecache
+        if not usecache is None:
+            action_usecache = usecache
         starttime = time.time()
         self.count += 1
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
-        if self.usecache:
+        if action_usecache:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
                 endtime = time.time()
@@ -85,11 +93,11 @@ class cqazapipytools:
             session.close()
             endtime = time.time()
             print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
-            if self.usecache:
+            if action_usecache:
                 self.saveCache(url, method, in_json, response.json())
             return response.json()
 
-    def bulkApiAction(self, url, method, in_list, maxsize, workers=4):
+    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None):
         self.count = 0
         results = []
         if len(in_list) == 0:
@@ -108,7 +116,7 @@ class cqazapipytools:
                 while True:
                     try:
                         chunk = q.get(block=False)
-                        result = self.apiAction(url, method, chunk)
+                        result = self.apiAction(url, method, chunk, usecache)
                         if isinstance(result, list):
                             results.extend(result)
                         else:
@@ -218,7 +226,7 @@ class cqazapipytools:
         return results
 
     def match(self, vintage, in_list, workers=16):
-        if len(in_list) < self.getCredits('fabricext','match','POST'):
+        if len(in_list) * self.getCredits('fabricext','match','GET') < self.getCredits('fabricext','match','POST'):
             return self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
         else:
             return self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
