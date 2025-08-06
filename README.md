@@ -20,8 +20,8 @@ git submodule add https://github.com/costquestassociates/cqazapi-pytools cqazapi
 Usage is as simple as importing and then instantiating.
 ```python
 from cqazapipytools import *
-cp = cqazapipytools(apikey)
-response = cp.apiAction('fabric/vintages', 'GET')
+with cqazapipytools(apikey) as cp:
+  response = cp.apiAction('fabric/vintages', 'GET')
 print(response)
 ```
 
