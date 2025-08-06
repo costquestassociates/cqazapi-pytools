@@ -17,6 +17,7 @@ class cqazapipytools:
     def __init__(self, apikey, baseurl = 'https://api.costquest.com/', usecache = True, cachepath = 'cache.db'):
         self.apikey = apikey
         self.baseurl = baseurl
+        self.sessionpool = queue.Queue()
         self.count = 0
         self.total = 0
         self.usecache = usecache
@@ -24,7 +25,21 @@ class cqazapipytools:
         if self.usecache:
             self.createCache()
         self.listapis = self.apiAction('accountcontrol/listapis', 'GET', usecache=False)
+
+    def __enter__(self):
+        return self
     
+    def __exit__(self, exc_type, exc_value, traceback):
+       self.closeSessions()
+    
+    def closeSessions(self):
+        while not self.sessionpool.empty():
+            try:
+                session = self.sessionpool.get_nowait()
+                session.close()
+            except queue.Empty:
+                break
+ 
     def clearCache(self):
        if os.path.exists(self.cachepath):
             os.remove(self.cachepath)
@@ -67,6 +82,14 @@ class cqazapipytools:
         starttime = time.time()
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
+        starttime = time.time()
+        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
+        if self.sessionpool.empty():
+            session = requests.Session()
+            session.mount('https://', adapter)
+            session.headers['apikey'] = self.apikey
+        else:
+            session = self.sessionpool.get()
         if method.upper() == 'GET':
             if in_json is not None:
                 if len(in_json[0]) > 0:
@@ -97,7 +120,7 @@ class cqazapipytools:
         elif response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
         else:
-            session.close()
+            self.sessionpool.put(session)
             endtime = time.time()
             self.count += 1
             print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
