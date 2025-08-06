@@ -5,7 +5,7 @@ import urllib.parse
 import time
 import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import h3
+#import h3
 import math
 import sqlite3
 import json
@@ -41,8 +41,9 @@ class cqazapipytools:
                 break
  
     def clearCache(self):
-       if os.path.exists(self.cachepath):
+        if os.path.exists(self.cachepath):
             os.remove(self.cachepath)
+        self.createCache()
     
     def createCache(self):
         with sqlite3.connect(self.cachepath) as cn:
@@ -227,11 +228,11 @@ class cqazapipytools:
             return self.mergeList(results, 'uuid')
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
-        for loc in in_list:
-            loc['h3'] = h3.latlng_to_cell(float(loc['latitude']), float(loc['longitude']), 4)
-        h3_merged = in_list
+        for l in in_list:
+            l['res'] = 4
+        h3_assign = self.mergeList(in_list + self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
         h3_unique = {}
-        for r in h3_merged:
+        for r in h3_assign:
             if r['h3'] not in h3_unique.keys():
                 h3_unique[r['h3']] = []
             h3_unique[r['h3']].append(r)
