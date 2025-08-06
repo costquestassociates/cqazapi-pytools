@@ -5,7 +5,6 @@ import urllib.parse
 import time
 import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
-#import h3
 import math
 import sqlite3
 import json
