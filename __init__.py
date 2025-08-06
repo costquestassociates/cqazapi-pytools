@@ -49,20 +49,21 @@ class cqazapipytools:
         with sqlite3.connect(self.cachepath) as cn:
             cn = sqlite3.connect(self.cachepath)
             cr = cn.cursor()
-            cr.execute('create table if not exists cache (hashvalue text, response text)')
-            cr.execute('create index if not exists hashvalue_index on cache (hashvalue)')
+            cr.execute('create table if not exists cache (hashvalue text, response text);')
+            cr.execute('create index if not exists hashvalue_index on cache (hashvalue);')
             cn.commit()
     
     def saveCache(self, url, method, data, response):
         with sqlite3.connect(self.cachepath) as cn:
             cur = cn.cursor()
-            cur.execute('insert into cache (hashvalue,response) values (?,?)', (self.createHash(url,method,data), json.dumps(response),))
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute('insert into cache (hashvalue,response) values (?,?);', (self.createHash(url,method,data), json.dumps(response),))
             cn.commit()
 
     def loadCache(self, url, method, data):
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
-            cr.execute('select response from cache where hashvalue=?', (self.createHash(url,method,data),))
+            cr.execute('select response from cache where hashvalue=?;', (self.createHash(url,method,data),))
             r = cr.fetchone()
             if not r is None:
                 return json.loads(r[0])
