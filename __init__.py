@@ -84,7 +84,7 @@ class cqazapipytools:
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
-        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
+        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
@@ -105,10 +105,6 @@ class cqazapipytools:
                 self.count += 1
                 print(f"API request ({self.count}/{self.total}) to CACHE {url} succeeded in {str(round(float(endtime-starttime),3))}s")
                 return cache_result
-        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
-        session = requests.Session()
-        session.mount('https://', adapter)
-        session.headers['apikey'] = self.apikey
         if method.upper() == 'GET':
             response = session.get(url)
         if method.upper() == 'POST':
