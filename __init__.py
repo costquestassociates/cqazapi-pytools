@@ -11,15 +11,31 @@ class cqazapipytools:
     def __init__(self, apikey, baseurl = 'https://api.costquest.com/'):
         self.apikey = apikey
         self.baseurl = baseurl
+        self.sessionpool = queue.Queue()
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+       self.closeSessions()
+    
+    def closeSessions(self):
+        while not self.sessionpool.empty():
+            try:
+                session = self.sessionpool.get_nowait()
+                session.close()
+            except queue.Empty:
+                break
 
     def apiAction(self, url, method, in_json = None):
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
         adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
-        session = requests.Session()
-        session.mount('https://', adapter)
-        session.headers['apikey'] = self.apikey
+        if self.sessionpool.empty():
+            session = requests.Session()
+            session.mount('https://', adapter)
+            session.headers['apikey'] = self.apikey
+        else:
+            session = self.sessionpool.get()
         if method.upper() == 'GET':
             if in_json is not None:
                 if len(in_json[0]) > 0:
@@ -32,7 +48,7 @@ class cqazapipytools:
             response = session.post(url, json=in_json)
         if response.status_code != 200:
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
-        session.close()
+        self.sessionpool.put(session)
         endtime = time.time()
         print(f"API request to {url} succeeded in {str(float(endtime-starttime))}s")
         return response.json()
