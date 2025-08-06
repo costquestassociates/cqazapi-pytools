@@ -55,14 +55,15 @@ class cqazapipytools:
     
     def saveCache(self, url, method, data, response):
         with sqlite3.connect(self.cachepath) as cn:
-            cur = cn.cursor()
-            cur.execute("PRAGMA journal_mode=WAL;")
-            cur.execute('insert into cache (hashvalue,response) values (?,?);', (self.createHash(url,method,data), json.dumps(response),))
+            cr = cn.cursor()
+            cr.execute("PRAGMA journal_mode=WAL;")
+            cr.execute('insert into cache (hashvalue,response) values (?,?);', (self.createHash(url,method,data), json.dumps(response),))
             cn.commit()
 
     def loadCache(self, url, method, data):
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
+            cr.execute("PRAGMA journal_mode=WAL;")
             cr.execute('select response from cache where hashvalue=?;', (self.createHash(url,method,data),))
             r = cr.fetchone()
             if not r is None:
