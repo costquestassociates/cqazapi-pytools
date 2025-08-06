@@ -62,7 +62,6 @@ class cqazapipytools:
     def loadCache(self, url, method, data):
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
-            cr.execute("PRAGMA journal_mode=WAL;")
             cr.execute('select response from cache where hashvalue=?;', (self.createHash(url,method,data),))
             r = cr.fetchone()
             if not r is None:
