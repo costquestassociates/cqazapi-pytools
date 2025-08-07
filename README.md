@@ -40,7 +40,7 @@ There are a few options when instantiating:
   * It's up to the user to manage the cache. Fabric data is stable within a vintage, so TTL can typically be long.
   * If input data stays the same, the same requests will be made by pytools. If the input data changes, there may be no cache hits. Single requests to `GET` endpoints are more likely to generate cache hits.
   * The cache can become very large. Consider having different cache files for different projects. Also consider using `clearCache()` or simply dropping the sqlite file when no longer needed.
-  * If `usecache=False` for the `apiaction()` or `bulkApiAction()` functions that particular request will skip caching.
+  * If `usecache=False` for the `apiaction()` or `bulkApiAction()` functions that particular request will skip caching, otherwise the global `usecache` setting will be used.
 
 
 
@@ -48,8 +48,8 @@ There are a few options when instantiating:
 
 Certain functions re-use the same input parameters.
 * `url` is an HTTP path.
-* `method` is `GET` or `POST`.
   * If the `url` parameter does not include a root domain, the tools will automatically add on `https://api.costquest.com/` as the root.
+* `method` is `GET` or `POST`.
 * `vintage` is a valid YYYYMM fabric vintage. These can be identified using the `fabric/vintages` endpoint.
 
 
@@ -67,7 +67,7 @@ This is used to make a single API call.
 
 ### bulkApiAction
 
-`bulkApiAction(url, method, in_list, maxsize, *workers)`
+`bulkApiAction(url, method, in_list, maxsize, *workers. usecache=None)`
 * `in_list` must be a list of items. It can be of any size.
 * `maxsize` is the maximum number of items to request at once to a bulk/`POST` API.
 * `workers` is the number of parallel requests to perform. It defaults to 4.
