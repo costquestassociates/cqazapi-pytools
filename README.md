@@ -31,7 +31,7 @@ git submodule update --init --remote
 ```
 
 There are a few options when instantiating:
-`cqazapipytools(apikey, baseurl='https://api.costquest.com', usecache=True, cachepath='cache.db')`
+`cqazapipytools(apikey, baseurl='https://api.costquest.com', usecache=True, cachepath=None)`
 * Must provide a valid CostQuest API key.
 * Leave baseurl as default, typically.
 * `cachepath` defines the path to a cache file. Example being `cachepath='C:\Temp\cache.db'` on windows or `cachepath='~/cache.db'` on linux.
