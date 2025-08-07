@@ -203,14 +203,14 @@ class cqazapipytools:
         doCollect(geojson)
         return list(set(results))
     
-    def attach(self, vintage, in_list, fields, workers=4):
+    def attach(self, vintage, in_list, fields, layer='locations', workers=4):
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
             if 'uuid' not in fields:
                 fields.append('uuid')
             get_in_list = []
             for l in in_list:
                 get_in_list.append({'uuid':l})
-            results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/locations', 'GET', get_in_list, 1, workers)
+            results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/{layer}', 'GET', get_in_list, 1, workers)
             for r in results:
                 for k in list(r.keys()):
                     if k not in fields:
@@ -221,7 +221,7 @@ class cqazapipytools:
             results = []
             for fg in fieldgroups:
                 fields = ','.join(fg)
-                results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
+                results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
             return self.mergeList(results, 'uuid')
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):

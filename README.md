@@ -51,6 +51,7 @@ Certain functions re-use the same input parameters.
   * If the `url` parameter does not include a root domain, the tools will automatically add on `https://api.costquest.com/` as the root.
 * `method` is `GET` or `POST`.
 * `vintage` is a valid YYYYMM fabric vintage. These can be identified using the `fabric/vintages` endpoint.
+* `workers` is how many concurrent threads can be used to perform requests.
 
 
 
@@ -70,7 +71,6 @@ This is used to make a single API call.
 `bulkApiAction(url, method, in_list, maxsize, *workers. usecache=None)`
 * `in_list` must be a list of items. It can be of any size.
 * `maxsize` is the maximum number of items to request at once to a bulk/`POST` API.
-* `workers` is the number of parallel requests to perform. It defaults to 4.
 
 Returns a list.
 
@@ -101,7 +101,7 @@ Returns a list of all fabric `uuid`s that fall within the given geojson object.
 
 ### attach
 
-`attach(vintage, in_list, fields, *layer)`
+`attach(vintage, in_list, fields, *layer, *workers)`
 * `in_list` is a list of form `['uuid1','uuid2']`.
 * `fields` is a list of fields to attach of form `['location_id','latitude','longitude']`.
 * `layer` is the layer type, it defaults to `locations`. Valid layers can be identified using the `fabric/layers` endpoint.
@@ -133,7 +133,7 @@ To address the challenge of dealing with disparate data, the `opt_tolerance` val
 
 ### match
 
-`match(vintage, in_list, workers=16)`
+`match(vintage, in_list, *workers)`
 * `in_list` is a list with a format of either `[{'sourcekey':'unique id','text':'unparsed address'}]` or `[{'sourcekey':'unique id','house_number':'house_number','road':'road','unit':'unit','city':'city','state':'state','postcode':'postcode'}]`.
 
 Returns a list of dict.
