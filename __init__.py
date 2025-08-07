@@ -13,15 +13,16 @@ import hashlib
 
 class cqazapipytools:
 
-    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', usecache = True, cachepath = 'cache.db'):
+    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', cachepath = None):
         self.apikey = apikey
         self.baseurl = baseurl
         self.sessionpool = queue.Queue()
         self.count = 0
         self.total = 0
-        self.usecache = usecache
         self.cachepath = cachepath
-        if self.usecache:
+        self.usecache = False
+        if not cachepath == None:
+            self.usecache = True
             self.createCache()
         self.listapis = self.apiAction('accountcontrol/listapis', 'GET', usecache=False)
 
@@ -62,7 +63,6 @@ class cqazapipytools:
     def loadCache(self, url, method, data):
         with sqlite3.connect(self.cachepath) as cn:
             cr = cn.cursor()
-            cr.execute("PRAGMA journal_mode=WAL;")
             cr.execute('select response from cache where hashvalue=?;', (self.createHash(url,method,data),))
             r = cr.fetchone()
             if not r is None:

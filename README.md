@@ -34,12 +34,13 @@ There are a few options when instantiating:
 `cqazapipytools(apikey, baseurl='https://api.costquest.com', usecache=True, cachepath='cache.db')`
 * Must provide a valid CostQuest API key.
 * Leave baseurl as default, typically.
-* `usecache` defaults to True. This means that requests will be saved in a local sqlite database to avoid making the same request again. This helps when designing a process so as to not continually make the same requests and use credits needlessly.
+* `cachepath` defines the path to a cache file. Example being `cachepath='C:\Temp\cache.db'` on windows or `cachepath='~/cache.db'` on linux.
+  * Will be created if the file does not exist, but the directory must pre-exist.
+  * This means that requests will be saved in a local sqlite database to avoid making the same request again. This helps when designing a process so as to not continually make the same requests and use credits needlessly.
   * It's up to the user to manage the cache. Fabric data is stable within a vintage, so TTL can typically be long.
-  * If input data stays the same, the same requests will be made by pytools. If the input data changes, there may be no cache hits. Single requests to `GET` endpoints are far more likely to get cache hits.
+  * If input data stays the same, the same requests will be made by pytools. If the input data changes, there may be no cache hits. Single requests to `GET` endpoints are more likely to generate cache hits.
   * The cache can become very large. Consider having different cache files for different projects. Also consider using `clearCache()` or simply dropping the sqlite file when no longer needed.
-  * If `usecache` is false no local cache will be used.
-* `cachepath` defaults to a file named `cache.db` in the current working directory but can be customized to any path.
+  * If `usecache=False` for the `apiaction()` or `bulkApiAction()` functions that particular request will skip caching.
 
 
 
@@ -55,7 +56,7 @@ Certain functions re-use the same input parameters.
 
 ### apiAction
 
-`apiAction(url, method, body)`
+`apiAction(url, method, body, usecache=None)`
 * `body` is a python object being of type `list` or `dict` mirroring the JSON types of `array` and `object`. If `body` is provided for a `GET` request, it should be a dictionary and will be converted to query string parameters.
 
 Returns an API response-like object.
