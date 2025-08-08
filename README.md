@@ -185,3 +185,55 @@ To address the challenge of dealing with disparate data, the `opt_tolerance` val
 Returns a list of dict.
 
 Performs address matching. Note that the `in_list` can be components or a full address.
+
+
+
+## Demo Examples
+
+### Data Pull
+```python
+from cqazapipytools import *
+with cqazapipytools(os.environ['CQAPIKEY']) as cp:
+    geojson = cp.apiAction('geosvc/libgetgeo/tiger/2020/counties?id=01001','GET')
+    collect = cp.collect('202412',geojson)
+    attach = cp.attach('202412',in_list=collect,fields=['location_id','latitude','longitude','address_primary','postal_code'])
+    cp.csvWrite('demo_data_output.csv',attach)
+```
+
+### Address Matching
+```python
+from cqazapipytools import *
+with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache.db') as cp:
+    addresses = cp.csvRead('demo_match_input.csv')
+    match = cp.match('202506',addresses)
+    cp.csvWrite('demo_match_output.csv',match)
+```
+
+### Address Matching
+```python
+from cqazapipytools import *
+with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache.db') as cp:
+    addresses = cp.csvRead('demo_match_input.csv')
+    match = cp.match('202506',addresses)
+    cp.csvWrite('demo_match_output.csv',match)
+```
+
+### Locate Coordinates
+```python
+from cqazapipytools import *
+with cqazapipytools(os.environ['CQAPIKEY']) as cp:
+    coordinates = cp.csvRead('demo_locate_input.csv')
+    locate = cp.locate('202506', coordinates)
+    cp.csvWrite('demo_locate_output.csv', cp.mergeList(locate + coordinates, 'sourcekey'))
+```
+
+### Coverage Pull
+```python
+from cqazapipytools import *
+with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache.db') as cp:
+    geojson = cp.apiAction('geosvc/libgetgeo/tiger/2020/counties?id=01001','GET')
+    collect = cp.collect('202412',geojson)
+    attach = cp.attach('202412',in_list=collect,fields=['location_id'])
+    coverage = cp.bulkApiAction('coverage/bdcfixed?vintage=202412', 'POST', [a['location_id'] for a in attach], 1000)
+    cp.csvWrite('demo_coverage_output.csv', coverage)
+```
