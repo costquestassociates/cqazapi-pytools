@@ -71,6 +71,7 @@ class cqazapipytools:
                 return json.loads(r[0])
     
     def createHash(self, url, method, data):
+        # for this, need to find some ordered way to do it so the order of data coming in does not matter?
         data_string = ""
         try:
             data_string = json.dumps(data)
@@ -100,7 +101,7 @@ class cqazapipytools:
                     beginstr = '?'
                     if '?' in url:
                         beginstr = '&'
-                    url += f"{beginstr}{urllib.parse.urlencode(in_json[0])}"
+                    url += f"{beginstr}{urllib.parse.urlencode(sorted(in_json[0].items()))}"
         if action_usecache:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
@@ -166,16 +167,18 @@ class cqazapipytools:
         return [list[i:i + size] for i in range(0, len(list), size)]
 
     def mergeList(self, in_list, property_name):
+        for il in in_list:
+            il[property_name] = str(il[property_name])
         merged_dict = {}
         all_keys = set()
         for item in in_list:
-            key = str(item.get(property_name))
+            key = item.get(property_name)
             if key is not None:
                 all_keys.update(item.keys())
                 if key not in merged_dict:
                     merged_dict[key] = {property_name: key}
         for item in in_list:
-            key = str(item.get(property_name))
+            key = item.get(property_name)
             if key is not None:
                 for k in all_keys:
                     if k in item:
@@ -282,7 +285,7 @@ class cqazapipytools:
             else:
                 results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], self.getMaxRequest('fabricext','locate'), workers))
         results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers))
-        return sorted(self.mergeList(results, 'uuid'),key=lambda u: u['uuid'])
+        return sorted(results,key=lambda u: u.get('sourcekey',''))
 
     def match(self, vintage, in_list, workers=16):
         results = []
