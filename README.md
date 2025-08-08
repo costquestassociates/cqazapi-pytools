@@ -2,7 +2,7 @@
 
 * This is a python class providing easier access to CostQuest APIs.
 * API definitions are at https://developer.costquest.com
-* Documentation is available at https://apidocs.costquest.com
+* API documentation is available at https://apidocs.costquest.com
 
 ## Issues, Bugs, and Feature Requests
 
@@ -10,12 +10,29 @@ Please create an issue on this GitHub repository.
 
 
 
-## Usage
+## Installation
+
+### Submodule
 
 To use the class, add it as a submodule to your project.
 ```bash
 git submodule add https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
 ```
+
+To get updates, you can do so by updating the submodule in the parent repository.
+```bash
+git submodule update --init --remote
+```
+
+### Cloning
+
+If you prefer, simply clone the repository.
+
+```bash
+git clone https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
+```
+
+### Usage
 
 Usage is as simple as importing and then instantiating.
 ```python
@@ -23,11 +40,6 @@ from cqazapipytools import *
 with cqazapipytools(apikey) as cp:
   response = cp.apiAction('fabric/vintages', 'GET')
 print(response)
-```
-
-To get updates, you can do so by updating the submodule in the parent repository.
-```bash
-git submodule update --init --remote
 ```
 
 There are a few options when instantiating:
