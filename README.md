@@ -90,6 +90,17 @@ This is a poor mans "join" of data. Given a single list of dictionaries, it will
 
 
 
+### flattenList
+
+`flattenList(in_list)`
+* `in_list` must be of type `list` and it must contain entries of type `dict`.
+
+Returns a list of dict.
+
+This will attempt to crudely flatten the data if there are complex objects provided (nested lists, dicts).
+
+
+
 ### csvRead
 
 `csvRead(filepath)`
@@ -103,7 +114,7 @@ Returns a list of dict.
 
 `csvwrite(filepath, in_list)`
 * `filepath` is a path to a CSV file. Will be overwritten if exists.
-* `in_list` is a list of dict. If the dict contains additional objects (list, dict) they will be crudely flattened horizontally for the row.
+* `in_list` is a list of dict. If the dict contains additional objects (list, dict) they will be modified using the `flattenList()` function.
 
 
 
