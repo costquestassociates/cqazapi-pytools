@@ -159,6 +159,7 @@ class cqazapipytools:
                 futures = [executor.submit(worker) for _ in range(workers)]
                 for future in as_completed(futures):
                     future.result()
+        self.total = 0
         return results
 
     def chunkList(self, list, size):
@@ -168,13 +169,13 @@ class cqazapipytools:
         merged_dict = {}
         all_keys = set()
         for item in in_list:
-            key = item.get(property_name)
+            key = str(item.get(property_name))
             if key is not None:
                 all_keys.update(item.keys())
                 if key not in merged_dict:
                     merged_dict[key] = {property_name: key}
         for item in in_list:
-            key = item.get(property_name)
+            key = str(item.get(property_name))
             if key is not None:
                 for k in all_keys:
                     if k in item:
@@ -194,18 +195,21 @@ class cqazapipytools:
         print(f"Read {len(data)} rows from file {filepath}")
         return data
 
-    def csvWrite(self, filepath, data):
-        flattened = [flatten(d) for d in data]
+    def csvWrite(self, filepath, in_list):
+        flattened = self.flattenList(in_list)
         fields = []
         for f in flattened:
             for k in f.keys():
                 if k not in fields:
                     fields.append(k)
         with open(filepath, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer = csv.DictWriter(csvfile, fieldnames=sorted(fields, reverse=True))
             writer.writeheader()
             writer.writerows(flattened)
-        print(f"Wrote {len(data)} rows to file {filepath}")
+        print(f"Wrote {len(flattened)} rows to file {filepath}")
+    
+    def flattenList(self, in_list):
+        return [flatten(il) for il in in_list]
 
     def getCredits(self, api, operation, method):
         for a in self.listapis:
@@ -227,7 +231,7 @@ class cqazapipytools:
             else:
                 results.extend(curr_result['data'])
         doCollect(geojson)
-        return list(set(results))
+        return sorted(list(set(results)))
     
     def attach(self, vintage, in_list, fields, layer='locations', workers=4):
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
@@ -241,14 +245,14 @@ class cqazapipytools:
                 for k in list(r.keys()):
                     if k not in fields:
                         r.pop(k, None)
-            return results
+            return sorted(results,key=lambda u: u['uuid'])
         else:
             fieldgroups = self.chunkList(fields, 5)
             results = []
             for fg in fieldgroups:
                 fields = ','.join(fg)
                 results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
-            return self.mergeList(results, 'uuid')
+            return sorted(self.mergeList(results, 'uuid'),key=lambda u: u['uuid'])
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for l in in_list:
@@ -278,10 +282,12 @@ class cqazapipytools:
             else:
                 results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], self.getMaxRequest('fabricext','locate'), workers))
         results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers))
-        return results
+        return sorted(self.mergeList(results, 'uuid'),key=lambda u: u['uuid'])
 
     def match(self, vintage, in_list, workers=16):
+        results = []
         if len(in_list) * self.getCredits('fabricext','match','GET') < self.getCredits('fabricext','match','POST'):
-            return self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
+            results = self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
         else:
-            return self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
+            results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
+        return results
