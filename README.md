@@ -4,9 +4,9 @@
 * API definitions are at https://developer.costquest.com
 * Documentation is available at https://apidocs.costquest.com
 
-## Issues / Bugs
+## Issues, Bugs, and Feature Requests
 
-Please create an issue on this GitHub page for any problems or bugs.
+Please create an issue on this GitHub repository.
 
 
 
