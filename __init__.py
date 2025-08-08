@@ -183,7 +183,10 @@ class cqazapipytools:
                     elif k not in merged_dict[key]:
                         merged_dict[key][k] = None
         return list(merged_dict.values())
-    
+
+    def flattenList(self, in_list):
+        return [flatten(il) for il in in_list]
+
     def csvRead(self, filepath):
         data = []
         count = 0
@@ -207,9 +210,6 @@ class cqazapipytools:
             writer.writeheader()
             writer.writerows(flattened)
         print(f"Wrote {len(flattened)} rows to file {filepath}")
-    
-    def flattenList(self, in_list):
-        return [flatten(il) for il in in_list]
 
     def getCredits(self, api, operation, method):
         for a in self.listapis:
