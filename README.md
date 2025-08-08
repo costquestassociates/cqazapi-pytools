@@ -47,16 +47,16 @@ print(response)
 ```
 
 There are a few options when instantiating:
-`cqazapipytools(apikey, baseurl='https://api.costquest.com', cachepath=None)`
+`cqazapipytools(apikey, baseurl='https://api.costquest.com/', cachepath=None)`
 * Must provide a valid CostQuest API key.
 * Leave baseurl as default, typically.
 * `cachepath` defines the path to a cache file. Example being `cachepath='C:\Temp\cache.db'` on windows or `cachepath='~/cache.db'` on linux.
   * Will be created if the file does not exist, but the directory must pre-exist.
   * This means that requests will be saved in a local sqlite database to avoid making the same request again. This helps when designing a process so as to not continually make the same requests and use credits needlessly.
   * It's up to the user to manage the cache. Fabric data is stable within a vintage, so TTL can typically be long.
-  * If input data stays the same, the same requests will be made by pytools. If the input data changes, there may be no cache hits. Single requests to `GET` endpoints are more likely to generate cache hits.
+  * If input data stays the same, PyTools will attempt to sort and make similar requests to increase cache hits. If the input data changes, there may be no cache hits. Single requests to `GET` endpoints are more likely to generate cache hits.
   * The cache can become very large. Consider having different cache files for different projects. Also consider using `clearCache()` or simply dropping the sqlite file when no longer needed.
-  * If `usecache=False` for the `apiaction()` or `bulkApiAction()` functions that particular request will skip caching, otherwise the global `usecache` setting will be used.
+  * If `usecache=False` for the `apiaction()` or `bulkApiAction()` functions that particular request or set of requests will skip caching, otherwise the global `usecache` setting will be used which is set to True when `cachepath` is provided.
 
 
 
@@ -64,7 +64,7 @@ There are a few options when instantiating:
 
 Certain functions re-use the same input parameters.
 * `url` is an HTTP path.
-  * If the `url` parameter does not include a root domain, the tools will automatically add on `https://api.costquest.com/` as the root.
+  * If the `url` parameter does not include a root domain, the tools will automatically add on `baseurl` as the root.
 * `method` is `GET` or `POST`.
 * `vintage` is a valid YYYYMM fabric vintage. These can be identified using the `fabric/vintages` endpoint.
 * `workers` is how many concurrent threads can be used to perform requests.
@@ -84,7 +84,7 @@ This is used to make a single API call.
 
 ### bulkApiAction
 
-`bulkApiAction(url, method, in_list, maxsize, *workers. usecache=None)`
+`bulkApiAction(url, method, in_list, maxsize, *workers, *usecache)`
 * `in_list` must be a list of items. It can be of any size.
 * `maxsize` is the maximum number of items to request at once to a bulk/`POST` API.
 
@@ -104,6 +104,8 @@ Returns a list of dict.
 
 This is a poor mans "join" of data. Given a single list of dictionaries, it will combine them on the chosen property based on dictionary keys. An example of this would be passing in two lists with dictionaries at a `location_id` level that you want a single list of dictionaries with one `location_id` but all properties in the resulting dictionary for each id.
 
+**IMPORTANT:** Because it uses dictionary hashing to find unique values for the `property_name`, it will result in a loss of records if the value of `property_name` is not unique - only one result will end up reflected in the result. 
+
 
 
 ### flattenList
@@ -113,7 +115,7 @@ This is a poor mans "join" of data. Given a single list of dictionaries, it will
 
 Returns a list of dict.
 
-This will attempt to crudely flatten the data if there are complex objects provided (nested lists, dicts).
+This will attempt to crudely flatten the data if there are complex objects provided (nested lists, dicts) into a list of dict.
 
 
 
@@ -171,7 +173,7 @@ Automatically breaks up data into manageable geographic areas for calling the `l
 #### Locate Usage Details
 Since the `locate` API can only operate on data that spans less than 10,000 square kilometers there is a trade off when breaking up data spatially. The locate function within these tools will assign data to h3_4's and then bulk process within each of those. This works very well for densely clustered data, but poorly for sparse disparate data.
 
-To address the challenge of dealing with disparate data, the `opt_tolerance` value defaults to 0.5 and can be set between 0 and 1. At 0, no optimization to preserve credits is performed and the process will be the fastest. At 1, the process optimizes to preserve as many credits as possible by calling the `GET` variant of the `locate` API leading to slow run times but less credit usage.
+To address the challenge of dealing with disparate data, the `opt_tolerance` value defaults to 0.5 and can be set between 0 and 1. At 0, no optimization to preserve credits is performed and the process will make the fewest requests. At 1, the process optimizes to preserve as many credits as possible by calling the `GET` variant of the `locate` API. The fastest setting will vary based on the geographic distribution of the input data.
 
 
 
