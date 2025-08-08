@@ -14,7 +14,7 @@ Please create an issue on this GitHub repository.
 
 Installation can be by either adding the repository as a submodule to an existing repository, or by cloning the repository.
 
-### Submodule
+### Option 1: Submodule
 
 To use the class, add it as a submodule to your project.
 ```bash
@@ -26,7 +26,7 @@ To get updates, you can do so by updating the submodule in the parent repository
 git submodule update --init --remote
 ```
 
-### Cloning
+### Option 2: Clone
 
 If you prefer, simply clone the repository.
 
