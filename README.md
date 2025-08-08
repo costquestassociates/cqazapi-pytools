@@ -90,6 +90,23 @@ This is a poor mans "join" of data. Given a single list of dictionaries, it will
 
 
 
+### csvRead
+
+`csvRead(filepath)`
+* `filepath` is a path to a CSV file.
+
+Returns a list of dict.
+
+
+
+### csvWrite
+
+`csvwrite(filepath, in_list)`
+* `filepath` is a path to a CSV file. Will be overwritten if exists.
+* `in_list` is a list of dict. If the dict contains additional objects (list, dict) they will be crudely flattened horizontally for the row.
+
+
+
 ### collect
 
 `collect(vintage, geojson)`
