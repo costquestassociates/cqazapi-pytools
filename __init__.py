@@ -10,6 +10,8 @@ import sqlite3
 import json
 import os
 import hashlib
+from flatten_json import flatten
+import csv
 
 class cqazapipytools:
 
@@ -180,6 +182,30 @@ class cqazapipytools:
                     elif k not in merged_dict[key]:
                         merged_dict[key][k] = None
         return list(merged_dict.values())
+    
+    def csvRead(self, filepath):
+        data = []
+        count = 0
+        with open(filepath, 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                data.append(row)
+                count += 1
+        print(f"Read {len(data)} rows from file {filepath}")
+        return data
+
+    def csvWrite(self, filepath, data):
+        flattened = [flatten(d) for d in data]
+        fields = []
+        for f in flattened:
+            for k in f.keys():
+                if k not in fields:
+                    fields.append(k)
+        with open(filepath, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(flattened)
+        print(f"Wrote {len(data)} rows to file {filepath}")
 
     def getCredits(self, api, operation, method):
         for a in self.listapis:
