@@ -12,6 +12,8 @@ Please create an issue on this GitHub repository.
 
 ## Installation
 
+Installation can be by either adding the repository as a submodule to an existing repository, or by cloning the repository.
+
 ### Submodule
 
 To use the class, add it as a submodule to your project.
@@ -31,6 +33,8 @@ If you prefer, simply clone the repository.
 ```bash
 git clone https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
 ```
+
+
 
 ### Usage
 
