@@ -16,7 +16,8 @@ Installation can be by either adding the repository as a submodule to an existin
 
 ### Option 1: Submodule
 
-To use the class, add it as a submodule to your project.
+If you are including within another repository, add as a submodule.
+
 ```bash
 git submodule add https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
 ```
@@ -28,10 +29,17 @@ git submodule update --init --remote
 
 ### Option 2: Clone
 
-If you prefer, simply clone the repository.
+If you are not including in a repository you can directly clone.
 
 ```bash
 git clone https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
+```
+
+
+### Requirements
+
+```bash
+pip install -r cqazapipytools/requirements.txt
 ```
 
 
