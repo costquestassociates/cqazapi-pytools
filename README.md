@@ -115,6 +115,20 @@ This is a poor mans "join" of data. Given two lists of dict, it will combine the
 
 
 
+### transformList
+
+`transformList(in_list, mode, keys)`
+* `in_list` must be of type list and it must contain entries of type `dict`.
+* `mode` controls what the function does.
+  * `select` removes all keys in each dict that are not in the `keys` list.
+  * `drop` drops all keys in each dict that are in the `keys` list.
+  * `rename` changes key names as defined by a dict of key:value (current:new) passed into the `keys` value.
+* `keys` is a list of strings for `mode` of `select` or `drop`. It is a dict for `rename`.
+
+Returns a list of dict.
+
+
+
 ### flattenList
 
 `flattenList(in_list)`
@@ -228,10 +242,11 @@ with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache.db') as cp:
 ### Locate Coordinates
 ```python
 from cqazapipytools import *
-with cqazapipytools(os.environ['CQAPIKEY']) as cp:
+with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache_locate.db') as cp:
     coordinates = cp.csvRead('demo_locate_input.csv')
     locate = cp.locate('202506', coordinates)
-    cp.csvWrite('demo_locate_output.csv', cp.mergeList(locate + coordinates, 'sourcekey'))
+    locate = cp.transformList(locate, {'latitude':'source_latitude','longitude':'source_longitude'}, 'rename')
+    cp.csvWrite('demo_locate_output.csv', cp.mergeList(locate, coordinates, 'sourcekey'))
 ```
 
 ### Coverage Pull

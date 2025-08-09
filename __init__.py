@@ -12,6 +12,7 @@ import os
 import hashlib
 from flatten_json import flatten
 import csv
+from collections import OrderedDict
 
 class cqazapipytools:
 
@@ -69,14 +70,20 @@ class cqazapipytools:
             r = cr.fetchone()
             if not r is None:
                 return json.loads(r[0])
-    
+ 
     def createHash(self, url, method, data):
-        # for this, need to find some ordered way to do it so the order of data coming in does not matter?
         data_string = ""
         try:
-            data_string = json.dumps(data)
+            if isinstance(data, dict):
+                ordered_data = OrderedDict(sorted(data.items()))
+                data_string = json.dumps(ordered_data)
+            elif isinstance(data, list) and len(data)>0 and isinstance(data[0], dict):
+                ordered_data = [OrderedDict(sorted(item.items())) for item in data]
+                data_string = json.dumps(ordered_data)
+            else:
+                data_string = json.dumps(data)
         except:
-            pass
+            data_string = json.dumps(data)
         hashstr = f"{url}_{method}_{data_string}"
         return hashlib.sha1(hashstr.encode()).hexdigest()
 
@@ -189,6 +196,29 @@ class cqazapipytools:
                 if not k in keys[curr_key].keys():
                     keys[curr_key][k] = l[k]
         return list(keys.values())
+    
+    def transformList(self, in_list, mode, keys):
+        mode = mode.lower()
+        if mode == 'select':
+            for il in in_list:
+                for k in list(il.keys()):
+                    if not k in keys:
+                        il.pop(k)
+        elif mode == 'drop':
+            for il in in_list:
+                for k in list(il.keys()):
+                    if k in keys:
+                        il.pop(k)
+        elif mode == 'rename':
+            if type(keys) != dict:
+                raise Exception("transformList() requires key value pairs of type dict for mode=rename")
+            for il in in_list:
+                for k in list(il.keys()):
+                    if k in keys.keys():
+                        il[keys[k]] = il.pop(k)
+        else:
+            raise Exception("Unsupported mode")
+        return in_list
 
     def flattenList(self, in_list):
         return [flatten(il) for il in in_list]
