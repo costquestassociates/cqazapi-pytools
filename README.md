@@ -112,7 +112,7 @@ Returns a list of dict.
 
 This is a poor mans "join" of data. Given a single list of dictionaries, it will combine them on the chosen property based on dictionary keys. An example of this would be passing in two lists with dictionaries at a `location_id` level that you want a single list of dictionaries with one `location_id` but all properties in the resulting dictionary for each id.
 
-**IMPORTANT:** Because it uses dictionary hashing to find unique values for the `property_name`, it will result in a loss of records if the value of `property_name` is not unique - only one result will end up reflected in the result. 
+**WARNING!** Because it uses dictionary hashing to find unique values for the `property_name`, it will result in a loss of data if the value of `property_name` is not unique - only one result will end up reflected in the result. In addition, because only one dict will be created for each unique `property_name` if the same key shows up in multiple records the value for that key will end up being the last value evaluated. This is mostly used as an internal function under controlled circumstances, be very careful if using it in any implementation.
 
 
 
