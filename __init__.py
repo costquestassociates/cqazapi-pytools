@@ -10,7 +10,7 @@ import sqlite3
 import json
 import os
 import hashlib
-from flatten_json import flatten
+import pandas
 import csv
 
 class cqazapipytools:
@@ -191,7 +191,7 @@ class cqazapipytools:
         return list(keys.values())
 
     def flattenList(self, in_list):
-        return [flatten(il) for il in in_list]
+        return pandas.json_normalize(in_list).to_dict(orient='records')
 
     def csvRead(self, filepath):
         data = []
