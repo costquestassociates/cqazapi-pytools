@@ -167,16 +167,21 @@ class cqazapipytools:
         return [list[i:i + size] for i in range(0, len(list), size)]
 
     def mergeList(self, in_list1, in_list2, key_name):
-        key_name = 'location_id'
         keys = {}
+        keys2 = {}
         for l in in_list1:
             if key_name not in l.keys():
                 raise Exception('Error in mergeList() - missing key for in_list1')
+            if l[key_name] in keys.keys():
+                raise Exception('Error in mergeList() - duplicate key in in_list1 found')
             keys[str(l[key_name])] = l
         for l in in_list2:
             curr_key = str(l[key_name])
             if key_name not in l.keys():
                 raise Exception('Error in mergeList() - missing key for in_list2')
+            if l[key_name] in keys2.keys():
+                raise Exception('Error in mergeList() - duplicate key in in_list2 found')
+            keys2[str(l[key_name])] = l
             if curr_key not in keys.keys():
                 print('Warning - dropping record in mergeList() function from in_list2 due to unmatched key')
                 continue 
@@ -259,6 +264,8 @@ class cqazapipytools:
         for l in in_list:
             l['res'] = 4
         h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
+        for l in in_list:
+            l.pop('res', None)
         h3_unique = {}
         for r in h3_assign:
             if r['h3'] not in h3_unique.keys():

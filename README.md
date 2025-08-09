@@ -104,15 +104,14 @@ This will break up larger bulk requests into batches as well as spawn concurrent
 
 ### mergeList
 
-`mergeList(in_list, property_name)`
-* `in_list` must be of type `list` and it must contain entries of type `dict`.
-* `property_name` must be a key present in all dictionaries in the `in_list`.
+`mergeList(in_list1, in_list2, key_name)`
+* `in_list1` must be of type `list` and it must contain entries of type `dict`.
+* `in_list2` must be of type `list` and it must contain entries of type `dict`.
+* `key_name` must be a unique key present in all dictionaries in `in_list1`.
 
 Returns a list of dict.
 
-This is a poor mans "join" of data. Given a single list of dictionaries, it will combine them on the chosen property based on dictionary keys. An example of this would be passing in two lists with dictionaries at a `location_id` level that you want a single list of dictionaries with one `location_id` but all properties in the resulting dictionary for each id.
-
-**WARNING!** Because it uses dictionary hashing to find unique values for the `property_name`, it will result in a loss of data if the value of `property_name` is not unique - only one result will end up reflected in the result. In addition, because only one dict will be created for each unique `property_name` if the same key shows up in multiple records the value for that key will end up being the last value evaluated. This is mostly used as an internal function under controlled circumstances, be very careful if using it in any implementation.
+This is a poor mans "join" of data. Given two lists of dict, it will combine them on the chosen `key_name`. An example of this would be passing in two lists with dictionaries containing a key of `uuid` that you want to bring data from `in_list2` to `in_list1`. It is closest to a left join in T-SQL terms. All distinct keys from `in_list` are captured, then only keys that do not currently exist in the new list of keys is captured from `in_list2`.
 
 
 
