@@ -166,26 +166,24 @@ class cqazapipytools:
     def chunkList(self, list, size):
         return [list[i:i + size] for i in range(0, len(list), size)]
 
-    def mergeList(self, in_list, property_name):
-        for il in in_list:
-            il[property_name] = str(il[property_name])
-        merged_dict = {}
-        all_keys = set()
-        for item in in_list:
-            key = item.get(property_name)
-            if key is not None:
-                all_keys.update(item.keys())
-                if key not in merged_dict:
-                    merged_dict[key] = {property_name: key}
-        for item in in_list:
-            key = item.get(property_name)
-            if key is not None:
-                for k in all_keys:
-                    if k in item:
-                        merged_dict[key][k] = item[k]
-                    elif k not in merged_dict[key]:
-                        merged_dict[key][k] = None
-        return list(merged_dict.values())
+    def mergeList(self, in_list1, in_list2, key_name):
+        key_name = 'location_id'
+        keys = {}
+        for l in in_list1:
+            if key_name not in l.keys():
+                raise Exception('Error in mergeList() - missing key for in_list1')
+            keys[str(l[key_name])] = l
+        for l in in_list2:
+            curr_key = str(l[key_name])
+            if key_name not in l.keys():
+                raise Exception('Error in mergeList() - missing key for in_list2')
+            if curr_key not in keys.keys():
+                print('Warning - dropping record in mergeList() function from in_list2 due to unmatched key')
+                continue 
+            for k in l.keys():
+                if not k in keys[curr_key].keys():
+                    keys[curr_key][k] = l[k]
+        return list(keys.values())
 
     def flattenList(self, in_list):
         return [flatten(il) for il in in_list]
@@ -248,19 +246,19 @@ class cqazapipytools:
                 for k in list(r.keys()):
                     if k not in fields:
                         r.pop(k, None)
-            return sorted(results,key=lambda u: u['uuid'])
+            return sorted(results, key=lambda u: u['uuid'])
         else:
             fieldgroups = self.chunkList(fields, 5)
             results = []
             for fg in fieldgroups:
                 fields = ','.join(fg)
                 results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
-            return sorted(self.mergeList(results, 'uuid'),key=lambda u: u['uuid'])
+            return sorted(results, key=lambda u: u['uuid'])
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for l in in_list:
             l['res'] = 4
-        h3_assign = self.mergeList(in_list + self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
+        h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
         h3_unique = {}
         for r in h3_assign:
             if r['h3'] not in h3_unique.keys():
