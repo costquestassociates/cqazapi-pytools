@@ -216,24 +216,15 @@ Performs address matching. Note that the `in_list` can be components or a full a
 from cqazapipytools import *
 with cqazapipytools(os.environ['CQAPIKEY']) as cp:
     geojson = cp.apiAction('geosvc/libgetgeo/tiger/2020/counties?id=01001','GET')
-    collect = cp.collect('202412',geojson)
-    attach = cp.attach('202412',in_list=collect,fields=['location_id','latitude','longitude','address_primary','postal_code'])
+    collect = cp.collect('202506',geojson)
+    attach = cp.attach('202506',in_list=collect,fields=['location_id','latitude','longitude','address_primary','postal_code'])
     cp.csvWrite('demo_data_output.csv',attach)
 ```
 
 ### Address Matching
 ```python
 from cqazapipytools import *
-with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache.db') as cp:
-    addresses = cp.csvRead('demo_match_input.csv')
-    match = cp.match('202506',addresses)
-    cp.csvWrite('demo_match_output.csv',match)
-```
-
-### Address Matching
-```python
-from cqazapipytools import *
-with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache.db') as cp:
+with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache_match.db') as cp:
     addresses = cp.csvRead('demo_match_input.csv')
     match = cp.match('202506',addresses)
     cp.csvWrite('demo_match_output.csv',match)
