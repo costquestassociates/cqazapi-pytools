@@ -236,7 +236,7 @@ from cqazapipytools import *
 with cqazapipytools(os.environ['CQAPIKEY'], cachepath='cache_locate.db') as cp:
     coordinates = cp.csvRead('demo_locate_input.csv')
     locate = cp.locate('202506', coordinates)
-    locate = cp.transformList(locate, {'latitude':'source_latitude','longitude':'source_longitude'}, 'rename')
+    locate = cp.transformList(locate, 'rename', {'latitude':'source_latitude','longitude':'source_longitude'})
     cp.csvWrite('demo_locate_output.csv', cp.mergeList(locate, coordinates, 'sourcekey'))
 ```
 
