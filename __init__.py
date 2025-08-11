@@ -174,28 +174,19 @@ class cqazapipytools:
         return [list[i:i + size] for i in range(0, len(list), size)]
 
     def mergeList(self, in_list1, in_list2, key_name):
-        keys = {}
         keys2 = {}
-        for l in in_list1:
-            if key_name not in l.keys():
-                raise Exception('Error in mergeList() - missing key for in_list1')
-            if l[key_name] in keys.keys():
-                raise Exception('Error in mergeList() - duplicate key in in_list1 found')
-            keys[str(l[key_name])] = l
         for l in in_list2:
-            curr_key = str(l[key_name])
-            if key_name not in l.keys():
-                raise Exception('Error in mergeList() - missing key for in_list2')
-            if l[key_name] in keys2.keys():
-                raise Exception('Error in mergeList() - duplicate key in in_list2 found')
+            if str(l[key_name]) in keys2:
+                raise Exception("mergeList() requires unique keys in in_list2")
             keys2[str(l[key_name])] = l
-            if curr_key not in keys.keys():
-                print('Warning - dropping record in mergeList() function from in_list2 due to unmatched key')
-                continue 
-            for k in l.keys():
-                if not k in keys[curr_key].keys():
-                    keys[curr_key][k] = l[k]
-        return list(keys.values())
+        for l in in_list1:
+            if str(key_name) in l.keys():
+                if str(l[key_name]) in keys2:
+                    l2 = keys2[str(l[key_name])]
+                for k2 in l2.keys():
+                    if k2 not in l.keys():
+                        l[k2] = keys2[str(l[key_name])][k2]
+        return in_list1
     
     def transformList(self, in_list, mode, keys):
         mode = mode.lower()
@@ -270,6 +261,7 @@ class cqazapipytools:
         return sorted(list(set(results)))
     
     def attach(self, vintage, in_list, fields, layer='locations', workers=4):
+        in_list = list(set(in_list))
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
             if 'uuid' not in fields:
                 fields.append('uuid')

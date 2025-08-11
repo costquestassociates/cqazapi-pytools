@@ -94,7 +94,7 @@ This is used to make a single API call.
 
 `bulkApiAction(url, method, in_list, maxsize, *workers, *usecache)`
 * `in_list` must be a list of items. It can be of any size.
-* `maxsize` is the maximum number of items to request at once to a bulk/`POST` API.
+* `maxsize` is the maximum number of items to request at once. If performing `GET` requests this will be made 1 regardless of what is passed in.
 
 Returns a list.
 
@@ -111,7 +111,13 @@ This will break up larger bulk requests into batches as well as spawn concurrent
 
 Returns a list of dict.
 
-This is a poor mans "join" of data. Given two lists of dict, it will combine them on the chosen `key_name`. An example of this would be passing in two lists with dictionaries containing a key of `uuid` that you want to bring data from `in_list2` to `in_list1`. It is closest to a left join in T-SQL terms. All distinct keys from `in_list` are captured, then only keys that do not currently exist in the new list of keys is captured from `in_list2`.
+This is a poor mans "join" of data. Given two lists of dict, it will combine them on the chosen `key_name`. An example of this would be passing in two lists with dictionaries containing a key of `uuid` that you want to bring data from `in_list2` to `in_list1`.
+
+#### Considerations
+* `key_name` values must be unique in `in_list2`.
+* All items from `in_list1` will be returned regardless of whether a match was found in `in_list2`.
+* Attributes that exist in `in_list2` with the same `key_name` will be added into the dict within `in_list1`.
+* Think of it like a `left join` in T-SQL where the right side is required to have unique keys.
 
 
 
