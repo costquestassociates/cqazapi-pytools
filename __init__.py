@@ -91,7 +91,6 @@ class cqazapipytools:
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
-        starttime = time.time()
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
@@ -262,7 +261,7 @@ class cqazapipytools:
         return sorted(list(set(results)))
     
     def attach(self, vintage, in_list, fields, layer='locations', workers=4):
-        in_list = list(set(in_list))
+        in_list = sorted(list(set([i for i in in_list if i is not None])))
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
             if 'uuid' not in fields:
                 fields.append('uuid')
