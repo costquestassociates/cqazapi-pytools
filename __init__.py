@@ -262,6 +262,7 @@ class cqazapipytools:
     
     def attach(self, vintage, in_list, fields, layer='locations', workers=4):
         in_list = sorted(list(set([i for i in in_list if i is not None])))
+        merge_list = []
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
             if 'uuid' not in fields:
                 fields.append('uuid')
@@ -279,8 +280,13 @@ class cqazapipytools:
             results = []
             for fg in fieldgroups:
                 fields = ','.join(fg)
-                results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
-            return sorted(results, key=lambda u: u['uuid'])
+                results.append(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
+            for r in range(len(results)-1):
+                if r == 0:
+                    merge_list = results[r]
+                else:
+                    self.mergeList(results[r], results[r+1], 'uuid')
+            return sorted(merge_list, key=lambda u: u['uuid'])
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for l in in_list:
