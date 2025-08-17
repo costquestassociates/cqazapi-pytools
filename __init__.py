@@ -183,9 +183,9 @@ class cqazapipytools:
                 if l[key_name] != None:
                     if str(l[key_name]) in keys2:
                         l2 = keys2[str(l[key_name])]
-                    for k2 in l2.keys():
-                        if k2 not in l.keys():
-                            l[k2] = keys2[str(l[key_name])][k2]
+                        for k2 in l2.keys():
+                            if k2 not in l.keys():
+                                l[k2] = keys2[str(l[key_name])][k2]
         return in_list1
     
     def transformList(self, in_list, mode, keys):
