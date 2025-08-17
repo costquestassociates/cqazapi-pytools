@@ -125,6 +125,7 @@ class cqazapipytools:
             time.sleep(retryafter)
             return self.apiAction(url, method, in_json)
         elif response.status_code != 200:
+            print(f'Debug Values: \n url: {url} \n method: {method} \n body: {in_json}')
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
         else:
             self.sessionpool.put(session)
