@@ -282,12 +282,13 @@ class cqazapipytools:
             for fg in fieldgroups:
                 fields = ','.join(fg)
                 results.append(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
+            merge_list = []
             if len(results)>1:
-                for r in range(len(results)-1):
+                for r in range(len(results)):
                     if r == 0:
                         merge_list = results[r]
                     else:
-                        self.mergeList(results[r], results[r+1], 'uuid')
+                        merge_list = self.mergeList(merge_list, results[r], 'uuid')
             else:
                 merge_list = results[0]
             return sorted(merge_list, key=lambda u: u['uuid'])
