@@ -239,6 +239,15 @@ class cqazapipytools:
             writer.writerows(flattened)
         print(f"Wrote {len(flattened)} rows to file {filepath}")
 
+    def jsonRead(self, filepath):
+        with open(filepath, 'r', newline='') as rfile:
+            return json.load(rfile)
+
+    def jsonWrite(self, filepath, in_json):
+        with open(filepath, 'w', newline='') as wfile:
+            json.dump(in_json, wfile)
+        print(f"Wrote data to file {filepath}")
+
     def getCredits(self, api, operation, method):
         for a in self.listapis:
             if a['api'] == api and a['operation'] == operation and a['method'] == method:
