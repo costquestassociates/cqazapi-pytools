@@ -137,6 +137,7 @@ class cqazapipytools:
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None):
+        bulk_starttime = time.time()
         self.count = 0
         results = []
         if len(in_list) == 0:
@@ -168,6 +169,8 @@ class cqazapipytools:
                 for future in as_completed(futures):
                     future.result()
         self.total = 0
+        bulk_endtime = time.time()
+        print(f"API bulk request for {len(in_list)} items to {method.upper()} {url} succeeded in {str(round(float(bulk_endtime-bulk_starttime),3))}s")
         return results
 
     def chunkList(self, list, size):
