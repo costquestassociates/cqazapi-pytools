@@ -10,18 +10,22 @@ import sqlite3
 import json
 import os
 import hashlib
+from flatten_json import flatten
+import csv
+from collections import OrderedDict
 
 class cqazapipytools:
 
-    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', usecache = True, cachepath = 'cache.db'):
+    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', cachepath = None):
         self.apikey = apikey
         self.baseurl = baseurl
         self.sessionpool = queue.Queue()
         self.count = 0
         self.total = 0
-        self.usecache = usecache
         self.cachepath = cachepath
-        if self.usecache:
+        self.usecache = False
+        if not cachepath == None:
+            self.usecache = True
             self.createCache()
         self.listapis = self.apiAction('accountcontrol/listapis', 'GET', usecache=False)
 
@@ -66,13 +70,20 @@ class cqazapipytools:
             r = cr.fetchone()
             if not r is None:
                 return json.loads(r[0])
-    
+ 
     def createHash(self, url, method, data):
         data_string = ""
         try:
-            data_string = json.dumps(data)
+            if isinstance(data, dict):
+                ordered_data = OrderedDict(sorted(data.items()))
+                data_string = json.dumps(ordered_data)
+            elif isinstance(data, list) and len(data)>0 and isinstance(data[0], dict):
+                ordered_data = [OrderedDict(sorted(item.items())) for item in data]
+                data_string = json.dumps(ordered_data)
+            else:
+                data_string = json.dumps(data)
         except:
-            pass
+            data_string = json.dumps(data)
         hashstr = f"{url}_{method}_{data_string}"
         return hashlib.sha1(hashstr.encode()).hexdigest()
 
@@ -80,7 +91,6 @@ class cqazapipytools:
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
-        starttime = time.time()
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
@@ -97,7 +107,7 @@ class cqazapipytools:
                     beginstr = '?'
                     if '?' in url:
                         beginstr = '&'
-                    url += f"{beginstr}{urllib.parse.urlencode(in_json[0])}"
+                    url += f"{beginstr}{urllib.parse.urlencode(sorted(in_json[0].items()))}"
         if action_usecache:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
@@ -115,6 +125,7 @@ class cqazapipytools:
             time.sleep(retryafter)
             return self.apiAction(url, method, in_json)
         elif response.status_code != 200:
+            print(f'Debug Values: \n url: {url} \n method: {method} \n body: {in_json}')
             raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
         else:
             self.sessionpool.put(session)
@@ -156,29 +167,77 @@ class cqazapipytools:
                 futures = [executor.submit(worker) for _ in range(workers)]
                 for future in as_completed(futures):
                     future.result()
+        self.total = 0
         return results
 
     def chunkList(self, list, size):
         return [list[i:i + size] for i in range(0, len(list), size)]
 
-    def mergeList(self, in_list, property_name):
-        merged_dict = {}
-        all_keys = set()
-        for item in in_list:
-            key = item.get(property_name)
-            if key is not None:
-                all_keys.update(item.keys())
-                if key not in merged_dict:
-                    merged_dict[key] = {property_name: key}
-        for item in in_list:
-            key = item.get(property_name)
-            if key is not None:
-                for k in all_keys:
-                    if k in item:
-                        merged_dict[key][k] = item[k]
-                    elif k not in merged_dict[key]:
-                        merged_dict[key][k] = None
-        return list(merged_dict.values())
+    def mergeList(self, in_list1, in_list2, key_name):
+        keys2 = {}
+        for l in in_list2:
+            if str(l[key_name]) in keys2:
+                raise Exception("mergeList() requires unique keys in in_list2")
+            keys2[str(l[key_name])] = l
+        for l in in_list1:
+            if str(key_name) in l.keys():
+                if l[key_name] != None:
+                    if str(l[key_name]) in keys2:
+                        l2 = keys2[str(l[key_name])]
+                        for k2 in l2.keys():
+                            if k2 not in l.keys():
+                                l[k2] = keys2[str(l[key_name])][k2]
+        return in_list1
+    
+    def transformList(self, in_list, mode, keys):
+        mode = mode.lower()
+        if mode == 'select':
+            for il in in_list:
+                for k in list(il.keys()):
+                    if not k in keys:
+                        il.pop(k)
+        elif mode == 'drop':
+            for il in in_list:
+                for k in list(il.keys()):
+                    if k in keys:
+                        il.pop(k)
+        elif mode == 'rename':
+            if type(keys) != dict:
+                raise Exception("transformList() requires key value pairs of type dict for mode=rename")
+            for il in in_list:
+                for k in list(il.keys()):
+                    if k in keys.keys():
+                        il[keys[k]] = il.pop(k)
+        else:
+            raise Exception("Unsupported mode")
+        return in_list
+
+    def flattenList(self, in_list):
+        return [flatten(il) for il in in_list]
+
+    def csvRead(self, filepath):
+        data = []
+        count = 0
+        with open(filepath, 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                data.append(row)
+                count += 1
+        print(f"Read {len(data)} rows from file {filepath}")
+        return data
+
+    def csvWrite(self, filepath, in_list):
+        flattened = self.flattenList(in_list)
+        fields = []
+        for f in flattened:
+            for k in f.keys():
+                if k not in fields:
+                    fields.append(k)
+        with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=sorted(fields, reverse=True))
+            writer.writeheader()
+            writer.writerows(flattened)
+        print(f"Wrote {len(flattened)} rows to file {filepath}")
 
     def getCredits(self, api, operation, method):
         for a in self.listapis:
@@ -200,33 +259,46 @@ class cqazapipytools:
             else:
                 results.extend(curr_result['data'])
         doCollect(geojson)
-        return list(set(results))
+        return sorted(list(set(results)))
     
-    def attach(self, vintage, in_list, fields, workers=4):
+    def attach(self, vintage, in_list, fields, layer='locations', workers=4):
+        in_list = sorted(list(set([i for i in in_list if i is not None])))
+        merge_list = []
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
             if 'uuid' not in fields:
                 fields.append('uuid')
             get_in_list = []
             for l in in_list:
                 get_in_list.append({'uuid':l})
-            results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/locations', 'GET', get_in_list, 1, workers)
+            results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/{layer}', 'GET', get_in_list, 1, workers)
             for r in results:
                 for k in list(r.keys()):
                     if k not in fields:
                         r.pop(k, None)
-            return results
+            return sorted(results, key=lambda u: u['uuid'])
         else:
             fieldgroups = self.chunkList(fields, 5)
             results = []
             for fg in fieldgroups:
                 fields = ','.join(fg)
-                results.extend(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/locations?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
-            return self.mergeList(results, 'uuid')
+                results.append(self.bulkApiAction(self.baseurl + f'fabric/{vintage}/bulk/{layer}?field={fields}', 'POST', in_list, self.getMaxRequest('fabric','bulk'), workers))
+            merge_list = []
+            if len(results)>1:
+                for r in range(len(results)):
+                    if r == 0:
+                        merge_list = results[r]
+                    else:
+                        merge_list = self.mergeList(merge_list, results[r], 'uuid')
+            else:
+                merge_list = results[0]
+            return sorted(merge_list, key=lambda u: u['uuid'])
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for l in in_list:
             l['res'] = 4
-        h3_assign = self.mergeList(in_list + self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
+        h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
+        for l in in_list:
+            l.pop('res', None)
         h3_unique = {}
         for r in h3_assign:
             if r['h3'] not in h3_unique.keys():
@@ -251,10 +323,12 @@ class cqazapipytools:
             else:
                 results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], self.getMaxRequest('fabricext','locate'), workers))
         results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers))
-        return results
+        return sorted(results,key=lambda u: u.get('sourcekey',''))
 
     def match(self, vintage, in_list, workers=16):
+        results = []
         if len(in_list) * self.getCredits('fabricext','match','GET') < self.getCredits('fabricext','match','POST'):
-            return self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
+            results = self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
         else:
-            return self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
+            results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
+        return results
