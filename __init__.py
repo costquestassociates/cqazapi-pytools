@@ -235,7 +235,7 @@ class cqazapipytools:
             for k in f.keys():
                 if k not in fields:
                     fields.append(k)
-        with open(filepath, 'w', newline='') as csvfile:
+        with open(filepath, 'w', newline='', encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=sorted(fields, reverse=True))
             writer.writeheader()
             writer.writerows(flattened)
