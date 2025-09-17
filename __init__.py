@@ -13,6 +13,7 @@ import hashlib
 from flatten_json import flatten
 import csv
 from collections import OrderedDict
+from contextlib import closing
 
 class cqazapipytools:
 
@@ -49,7 +50,7 @@ class cqazapipytools:
         self.createCache()
     
     def createCache(self):
-        with sqlite3.connect(self.cachepath) as cn:
+        with closing(sqlite3.connect(self.cachepath)) as cn:
             cn = sqlite3.connect(self.cachepath)
             cr = cn.cursor()
             cr.execute('create table if not exists cache (hashvalue text, response text);')
@@ -57,14 +58,14 @@ class cqazapipytools:
             cn.commit()
     
     def saveCache(self, url, method, data, response):
-        with sqlite3.connect(self.cachepath) as cn:
+        with closing(sqlite3.connect(self.cachepath)) as cn:
             cr = cn.cursor()
             cr.execute("PRAGMA journal_mode=WAL;")
             cr.execute('insert into cache (hashvalue,response) values (?,?);', (self.createHash(url,method,data), json.dumps(response),))
             cn.commit()
 
     def loadCache(self, url, method, data):
-        with sqlite3.connect(self.cachepath) as cn:
+        with closing(sqlite3.connect(self.cachepath)) as cn:
             cr = cn.cursor()
             cr.execute('select response from cache where hashvalue=?;', (self.createHash(url,method,data),))
             r = cr.fetchone()
