@@ -126,8 +126,7 @@ class cqazapipytools:
             time.sleep(retryafter)
             return self.apiAction(url, method, in_json)
         elif response.status_code != 200:
-            print(f'Debug Values: \n url: {url} \n method: {method} \n body: {in_json}')
-            raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
+            print(f'API request failed with status code {response.status_code} and message {response.text} \n url: {url} \n method: {method} \n body: {in_json}')
         else:
             self.sessionpool.put(session)
             endtime = time.time()
@@ -138,6 +137,7 @@ class cqazapipytools:
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None):
+        bulk_starttime = time.time()
         self.count = 0
         results = []
         if len(in_list) == 0:
@@ -169,6 +169,8 @@ class cqazapipytools:
                 for future in as_completed(futures):
                     future.result()
         self.total = 0
+        bulk_endtime = time.time()
+        print(f"API bulk request for {len(in_list)} items to {method.upper()} {url} succeeded in {str(round(float(bulk_endtime-bulk_starttime),3))}s")
         return results
 
     def chunkList(self, list, size):
@@ -234,11 +236,20 @@ class cqazapipytools:
             for k in f.keys():
                 if k not in fields:
                     fields.append(k)
-        with open(filepath, 'w', newline='') as csvfile:
+        with open(filepath, 'w', newline='', encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=sorted(fields, reverse=True))
             writer.writeheader()
             writer.writerows(flattened)
         print(f"Wrote {len(flattened)} rows to file {filepath}")
+
+    def jsonRead(self, filepath):
+        with open(filepath, 'r', newline='') as rfile:
+            return json.load(rfile)
+
+    def jsonWrite(self, filepath, in_json):
+        with open(filepath, 'w', newline='') as wfile:
+            json.dump(in_json, wfile)
+        print(f"Wrote data to file {filepath}")
 
     def getCredits(self, api, operation, method):
         for a in self.listapis:
