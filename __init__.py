@@ -87,7 +87,7 @@ class cqazapipytools:
         hashstr = f"{url}_{method}_{data_string}"
         return hashlib.sha1(hashstr.encode()).hexdigest()
 
-    def apiAction(self, url, method, in_json=None, usecache=None):
+    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False):
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
@@ -98,7 +98,8 @@ class cqazapipytools:
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
-            session.headers['apikey'] = self.apikey
+            if 'costquest' in url.lower():
+                session.headers['apikey'] = self.apikey
         else:
             session = self.sessionpool.get()
         if method.upper() == 'GET':
@@ -118,7 +119,10 @@ class cqazapipytools:
         if method.upper() == 'GET':
             response = session.get(url)
         if method.upper() == 'POST':
-            response = session.post(url, json=in_json)
+            if noarray:
+                response = session.post(url, json=in_json[0])
+            else:
+                response = session.post(url, json=in_json)
         if response.status_code == 429:
             retryafter = int(response.headers.get('Retry-After', 60)) + 1
             print(f'Rate limiting encountered, waiting for {retryafter}s')
@@ -135,7 +139,7 @@ class cqazapipytools:
                 self.saveCache(url, method, in_json, response.json())
             return response.json()
 
-    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None):
+    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False):
         bulk_starttime = time.time()
         self.count = 0
         results = []
@@ -155,7 +159,7 @@ class cqazapipytools:
                 while True:
                     try:
                         chunk = q.get(block=False)
-                        result = self.apiAction(url, method, chunk, usecache)
+                        result = self.apiAction(url, method, chunk, usecache, noarray)
                         if isinstance(result, list):
                             results.extend(result)
                         else:
