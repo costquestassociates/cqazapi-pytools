@@ -288,6 +288,9 @@ class cqazapipytools:
                 get_in_list.append({'uuid':l})
             results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/{layer}', 'GET', get_in_list, 1, workers)
             for r in results:
+                for f in fields:
+                    if f not in r.keys():
+                        raise Exception('missing key requested for attach using data endpoint')
                 for k in list(r.keys()):
                     if k not in fields:
                         r.pop(k, None)
