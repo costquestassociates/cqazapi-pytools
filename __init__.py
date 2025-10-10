@@ -128,7 +128,15 @@ class cqazapipytools:
             retryafter = int(response.headers.get('Retry-After', 60)) + 1
             print(f'Rate limiting encountered, waiting for {retryafter}s')
             time.sleep(retryafter)
-            return self.apiAction(url, method, in_json)
+            if method.upper() == 'GET':
+                #response = session.get(url)
+                return self.apiAction(url, 'GET')
+            if method.upper() == 'POST':
+                if noarray:
+                    return self.apiAction(url, method, in_json[0])
+                else:
+                    return self.apiAction(url, method, in_json)
+            #return self.apiAction(url, method, in_json)
         elif response.status_code != 200:
             print(f'API request failed with status code {response.status_code} and message {response.text} \n url: {url} \n method: {method} \n body: {in_json}')
         else:
