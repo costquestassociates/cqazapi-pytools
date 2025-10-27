@@ -321,7 +321,7 @@ class cqazapipytools:
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for l in in_list:
             l['res'] = 4
-        h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
+        h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, self.getMaxRequest('geosvc','h3assign'), 8), 'sourcekey')
         for l in in_list:
             l.pop('res', None)
         h3_unique = {}

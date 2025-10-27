@@ -157,9 +157,26 @@ Returns a list of dict.
 
 ### csvWrite
 
-`csvwrite(filepath, in_list)`
+`csvWrite(filepath, in_list)`
 * `filepath` is a path to a CSV file. Will be overwritten if exists.
 * `in_list` is a list of dict. If the dict contains additional objects (list, dict) they will be modified using the `flattenList()` function.
+
+
+
+### jsonRead
+
+`jsonRead(filepath)`
+* `filepath` is a path to a JSON file.
+
+Returns a python object.
+
+
+
+### jsonWrite
+
+`jsonWrite(filepath, object)`
+* `filepath` is a path to a JSON file. Will be overwritten if exists.
+* `object` is a python object.
 
 
 
