@@ -270,6 +270,9 @@ class cqazapipytools:
         for a in self.listapis:
             if a['api'] == api and a['operation'] == operation and a['method'] == 'POST':
                 return a['maxrequest']
+            
+    def getFields(self, vintage):
+        return self.apiAction(f'fabric/{vintage}/fields', 'GET', usecache=False)
 
     def collect(self, vintage, geojson):
         results = []
@@ -284,6 +287,13 @@ class cqazapipytools:
         return sorted(list(set(results)))
     
     def attach(self, vintage, in_list, fields, layer='locations', workers=4):
+        if type(fields) == int:
+            datalevel = fields
+            fields = []
+            apifields = self.getFields(vintage)
+            for af in apifields:
+                if af['datalevel'] <= datalevel:
+                    fields.append(af['fieldname'])      
         in_list = sorted(list(set([i for i in in_list if i is not None])))
         merge_list = []
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
