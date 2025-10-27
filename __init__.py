@@ -239,7 +239,7 @@ class cqazapipytools:
         print(f"Read {len(data)} rows from file {filepath}")
         return data
 
-    def csvWrite(self, filepath, in_list):
+    def csvWrite(self, filepath, in_list, fields = None):
         flattened = self.flattenList(in_list)
         fields = []
         for f in flattened:
@@ -247,7 +247,11 @@ class cqazapipytools:
                 if k not in fields:
                     fields.append(k)
         with open(filepath, 'w', newline='', encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=sorted(fields, reverse=True))
+            if fields != None:
+                fieldnames = fields
+            else:
+                fieldnames = sorted(fields, reverse=True)
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(flattened)
         print(f"Wrote {len(flattened)} rows to file {filepath}")
@@ -271,8 +275,11 @@ class cqazapipytools:
             if a['api'] == api and a['operation'] == operation and a['method'] == 'POST':
                 return a['maxrequest']
             
-    def getFields(self, vintage):
-        return self.apiAction(f'fabric/{vintage}/fields', 'GET', usecache=False)
+    def getFields(self, vintage, layer, list_only=False):
+        if list_only == True:
+            return [f['fieldname'] for f in self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)]
+        else:
+            return self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)
 
     def collect(self, vintage, geojson):
         results = []
@@ -290,10 +297,10 @@ class cqazapipytools:
         if type(fields) == int:
             datalevel = fields
             fields = []
-            apifields = self.getFields(vintage)
+            apifields = self.getFields(vintage, layer)
             for af in apifields:
-                if af['datalevel'] <= datalevel:
-                    fields.append(af['fieldname'])      
+                if af['datalevel'] <= datalevel and af['fieldname'] != 'uuid':
+                    fields.append(af['fieldname'])
         in_list = sorted(list(set([i for i in in_list if i is not None])))
         merge_list = []
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
@@ -367,3 +374,15 @@ class cqazapipytools:
         else:
             results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
         return results
+
+    def convert(self, filepath):
+        url = f'{self.baseurl}geosvc/convert'
+        with open(filepath, 'rb') as file:
+            files = {'file': file}
+            response = requests.post(url, files=files, headers={'apikey': self.apikey})
+        if response.status_code != 200:
+            print(f'convert failed with status code {response.status_code} and message {response.text} \n url: {url} \n filepath: {filepath}')
+            raise Exception(f'Error converting file: {filepath}')
+        else:
+            print(f'Conversion of file {filepath} succeeded')
+            return response.json()

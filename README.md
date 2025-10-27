@@ -232,6 +232,15 @@ Performs address matching. Note that the `in_list` can be components or a full a
 
 
 
+### convert
+
+`convert(filepath)`
+* `filepath` is a path to a GIS file.
+
+Returns a GeoJSON object for any polygons that exist within the GIS file (SHP, GPKG, KML, etc.). All other data is laundered. See documentation for API for more details.
+
+
+
 ## Demo Examples
 
 ### Data Pull
