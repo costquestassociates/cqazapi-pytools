@@ -275,11 +275,15 @@ class cqazapipytools:
             if a['api'] == api and a['operation'] == operation and a['method'] == 'POST':
                 return a['maxrequest']
             
-    def getFields(self, vintage, layer, list_only=False):
+    def getFields(self, vintage, layer, datalevel=None, list_only=False):
+        fields = self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)
         if list_only == True:
-            return [f['fieldname'] for f in self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)]
+            if datalevel:
+                return [f['fieldname'] for f in fields if f['datalevel'] == datalevel]
+            else:
+                return [f['fieldname'] for f in fields]
         else:
-            return self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)
+            return fields
 
     def collect(self, vintage, geojson):
         results = []
@@ -293,9 +297,10 @@ class cqazapipytools:
         doCollect(geojson)
         return sorted(list(set(results)))
     
-    def attach(self, vintage, in_list, fields, layer='locations', workers=4):
-        if type(fields) == int:
-            datalevel = fields
+    def attach(self, vintage, in_list, fields=None, layer='locations', datalevel=None, workers=4):
+        if fields == None and datalevel == None:
+            raise Exception("attach() requires either fields or datalevel be passed")
+        if datalevel:
             fields = []
             apifields = self.getFields(vintage, layer)
             for af in apifields:

@@ -250,8 +250,8 @@ from cqazapipytools import *
 with cqazapipytools(os.environ['CQAPIKEY']) as cp:
     geojson = cp.convert('/mnt/c/Temp/data.kmz')
     collect = cp.collect('202412',geojson)
-    attach = cp.attach('202412',collect,20)
-    cp.csvWrite('demo_data_output.csv', attach, fieldnames=cp.getFields('202412','locations',True))
+    attach = cp.attach('202412',collect,datalevel=20)
+    cp.csvWrite('demo_data_output.csv', attach, fieldnames=cp.getFields('202412','locations',20,True))
 ```
 
 ### Address Matching
