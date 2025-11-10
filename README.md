@@ -81,8 +81,10 @@ Certain functions re-use the same input parameters.
 
 ### apiAction
 
-`apiAction(url, method, body, usecache=None)`
+`apiAction(url, method, body, usecache=None, bulkCacheUpdates=False, cacheUpdates=None)`
 * `body` is a python object being of type `list` or `dict` mirroring the JSON types of `array` and `object`. If `body` is provided for a `GET` request, it should be a dictionary and will be converted to query string parameters.
+* `bulkCacheUpdates` defaults to `False`. When set to `True`, cache writes are deferred and collected in the `cacheUpdates` array instead of being written immediately. This improves performance for bulk operations by batching cache writes into a single database transaction.
+* `cacheUpdates` is a list that collects cache entries when `bulkCacheUpdates=True`. Each entry is a tuple of `(url, method, data, response)`. This array is populated by `apiAction` and consumed by `bulkApiAction` for batch cache writing. Should be passed as an empty list `[]` when using bulk cache updates.
 
 Returns an API response-like object.
 
@@ -92,9 +94,10 @@ This is used to make a single API call.
 
 ### bulkApiAction
 
-`bulkApiAction(url, method, in_list, maxsize, *workers, *usecache)`
+`bulkApiAction(url, method, in_list, maxsize, *workers, *usecache,  *bulkCacheUpdates)`
 * `in_list` must be a list of items. It can be of any size.
 * `maxsize` is the maximum number of items to request at once. If performing `GET` requests this will be made 1 regardless of what is passed in.
+* `bulkCacheUpdates` defaults to `False`. When set to `True`, enables batch cache writing for improved performance. All cache updates from individual API calls are collected and written to the cache database in a single transaction at the end of the bulk operation. This significantly reduces database I/O overhead for large bulk operations.
 
 Returns a list.
 
