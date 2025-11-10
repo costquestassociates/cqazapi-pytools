@@ -177,7 +177,7 @@ class cqazapipytools:
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False, bulkCacheUpdates=False):
-
+        bulk_starttime = time.time()
         self.count = 0
         results = []
         cacheUpdates = []
