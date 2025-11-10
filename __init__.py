@@ -51,6 +51,8 @@ class cqazapipytools:
     
     def createCache(self):
         with closing(sqlite3.connect(self.cachepath)) as cn:
+
+            cn = sqlite3.connect(self.cachepath)
             cr = cn.cursor()
             cr.execute('create table if not exists cache (hashvalue text, response text);')
             cr.execute('create index if not exists hashvalue_index on cache (hashvalue);')
@@ -111,8 +113,9 @@ class cqazapipytools:
             data_string = json.dumps(data)
         hashstr = f"{url}_{method}_{data_string}"
         return hashlib.sha1(hashstr.encode()).hexdigest()
+
  
-    def apiAction(self, url, method, in_json=None, usecache=None, bulkCacheUpdates=False, cacheUpdates=None):
+    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False, bulkCacheUpdates=False, cacheUpdates=None):
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
@@ -123,7 +126,8 @@ class cqazapipytools:
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
-            session.headers['apikey'] = self.apikey
+            if 'costquest' in url.lower():
+                session.headers['apikey'] = self.apikey
         else:
             session = self.sessionpool.get()
         if method.upper() == 'GET':
@@ -143,15 +147,23 @@ class cqazapipytools:
         if method.upper() == 'GET':
             response = session.get(url)
         if method.upper() == 'POST':
-            response = session.post(url, json=in_json)
+            if noarray:
+                response = session.post(url, json=in_json[0])
+            else:
+                response = session.post(url, json=in_json)
         if response.status_code == 429:
             retryafter = int(response.headers.get('Retry-After', 60)) + 1
             print(f'Rate limiting encountered, waiting for {retryafter}s')
             time.sleep(retryafter)
-            return self.apiAction(url, method, in_json)
+            if method.upper() == 'GET':
+                return self.apiAction(url, 'GET')
+            if method.upper() == 'POST':
+                if noarray:
+                    return self.apiAction(url, method, in_json[0])
+                else:
+                    return self.apiAction(url, method, in_json)
         elif response.status_code != 200:
-            print(f'Debug Values: \n url: {url} \n method: {method} \n body: {in_json}')
-            raise Exception(f'API request failed with status code {response.status_code} and message {response.text}')
+            print(f'API request failed with status code {response.status_code} and message {response.text} \n url: {url} \n method: {method} \n body: {in_json}')
         else:
             self.sessionpool.put(session)
             endtime = time.time()
@@ -164,7 +176,8 @@ class cqazapipytools:
                     self.saveCache(url, method, in_json, response.json())
             return response.json()
 
-    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, bulkCacheUpdates=False):
+    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False, bulkCacheUpdates=False):
+
         self.count = 0
         results = []
         cacheUpdates = []
@@ -185,7 +198,8 @@ class cqazapipytools:
                 while True:
                     try:
                         chunk = q.get(block=False)
-                        result = self.apiAction(url, method, chunk, usecache=usecache, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+                        result = self.apiAction(url, method, chunk, usecache=usecache, noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+
                         if isinstance(result, list):
                             results.extend(result)
                         else:
@@ -203,6 +217,8 @@ class cqazapipytools:
         if bulkCacheUpdates and len(cacheUpdates) > 0:
             self.saveCacheBulk(cacheUpdates)
 
+        bulk_endtime = time.time()
+        print(f"API bulk request for {len(in_list)} items to {method.upper()} {url} succeeded in {str(round(float(bulk_endtime-bulk_starttime),3))}s")
         return results
 
     def chunkList(self, list, size):
@@ -261,18 +277,31 @@ class cqazapipytools:
         print(f"Read {len(data)} rows from file {filepath}")
         return data
 
-    def csvWrite(self, filepath, in_list):
+    def csvWrite(self, filepath, in_list, fields = None):
         flattened = self.flattenList(in_list)
         fields = []
         for f in flattened:
             for k in f.keys():
                 if k not in fields:
                     fields.append(k)
-        with open(filepath, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=sorted(fields, reverse=True))
+        with open(filepath, 'w', newline='', encoding="utf-8") as csvfile:
+            if fields != None:
+                fieldnames = fields
+            else:
+                fieldnames = sorted(fields, reverse=True)
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(flattened)
         print(f"Wrote {len(flattened)} rows to file {filepath}")
+
+    def jsonRead(self, filepath):
+        with open(filepath, 'r', newline='') as rfile:
+            return json.load(rfile)
+
+    def jsonWrite(self, filepath, in_json):
+        with open(filepath, 'w', newline='') as wfile:
+            json.dump(in_json, wfile)
+        print(f"Wrote data to file {filepath}")
 
     def getCredits(self, api, operation, method):
         for a in self.listapis:
@@ -283,6 +312,16 @@ class cqazapipytools:
         for a in self.listapis:
             if a['api'] == api and a['operation'] == operation and a['method'] == 'POST':
                 return a['maxrequest']
+            
+    def getFields(self, vintage, layer, datalevel=None, list_only=False):
+        fields = self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)
+        if list_only == True:
+            if datalevel:
+                return [f['fieldname'] for f in fields if f['datalevel'] == datalevel]
+            else:
+                return [f['fieldname'] for f in fields]
+        else:
+            return fields
 
     def collect(self, vintage, geojson):
         results = []
@@ -296,7 +335,15 @@ class cqazapipytools:
         doCollect(geojson)
         return sorted(list(set(results)))
     
-    def attach(self, vintage, in_list, fields, layer='locations', workers=4):
+    def attach(self, vintage, in_list, fields=None, layer='locations', datalevel=None, workers=4):
+        if fields == None and datalevel == None:
+            raise Exception("attach() requires either fields or datalevel be passed")
+        if datalevel:
+            fields = []
+            apifields = self.getFields(vintage, layer)
+            for af in apifields:
+                if af['datalevel'] <= datalevel and af['fieldname'] != 'uuid':
+                    fields.append(af['fieldname'])
         in_list = sorted(list(set([i for i in in_list if i is not None])))
         merge_list = []
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
@@ -307,6 +354,9 @@ class cqazapipytools:
                 get_in_list.append({'uuid':l})
             results = self.bulkApiAction(self.baseurl + f'fabric/{vintage}/data/{layer}', 'GET', get_in_list, 1, workers)
             for r in results:
+                for f in fields:
+                    if f not in r.keys():
+                        raise Exception('missing key requested for attach using data endpoint')
                 for k in list(r.keys()):
                     if k not in fields:
                         r.pop(k, None)
@@ -331,7 +381,7 @@ class cqazapipytools:
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, workers=4):
         for l in in_list:
             l['res'] = 4
-        h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, 1000, 8), 'sourcekey')
+        h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, self.getMaxRequest('geosvc','h3assign'), 8), 'sourcekey')
         for l in in_list:
             l.pop('res', None)
         h3_unique = {}
@@ -367,3 +417,15 @@ class cqazapipytools:
         else:
             results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
         return results
+
+    def convert(self, filepath):
+        url = f'{self.baseurl}geosvc/convert'
+        with open(filepath, 'rb') as file:
+            files = {'file': file}
+            response = requests.post(url, files=files, headers={'apikey': self.apikey})
+        if response.status_code != 200:
+            print(f'convert failed with status code {response.status_code} and message {response.text} \n url: {url} \n filepath: {filepath}')
+            raise Exception(f'Error converting file: {filepath}')
+        else:
+            print(f'Conversion of file {filepath} succeeded')
+            return response.json()
