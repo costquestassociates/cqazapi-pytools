@@ -51,6 +51,7 @@ class cqazapipytools:
     
     def createCache(self):
         with closing(sqlite3.connect(self.cachepath)) as cn:
+
             cn = sqlite3.connect(self.cachepath)
             cr = cn.cursor()
             cr.execute('create table if not exists cache (hashvalue text, response text);')
@@ -63,6 +64,31 @@ class cqazapipytools:
             cr.execute("PRAGMA journal_mode=WAL;")
             cr.execute('insert into cache (hashvalue,response) values (?,?);', (self.createHash(url,method,data), json.dumps(response),))
             cn.commit()
+    
+    def saveCacheBulk(self, inputArray):
+        if not inputArray or len(inputArray) == 0:
+            return
+            
+        with closing(sqlite3.connect(self.cachepath)) as cn:
+            cr = cn.cursor()
+            cr.execute("PRAGMA journal_mode=WAL;")
+            
+            # Prepare batch data for bulk insert
+            batch_data = []
+            placeholders = []
+            for cache_entry in inputArray:
+                url, method, data, response = cache_entry
+                hash_value = self.createHash(url, method, data)
+                response_json = json.dumps(response)
+                batch_data.extend([hash_value, response_json])
+                placeholders.append("(?, ?)")
+            
+            # Single INSERT with multiple VALUES
+            query = f"INSERT INTO cache (hashvalue, response) VALUES {', '.join(placeholders)}"
+            cr.execute(query, batch_data)
+            cn.commit()
+
+
 
     def loadCache(self, url, method, data):
         with closing(sqlite3.connect(self.cachepath)) as cn:
@@ -88,7 +114,8 @@ class cqazapipytools:
         hashstr = f"{url}_{method}_{data_string}"
         return hashlib.sha1(hashstr.encode()).hexdigest()
 
-    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False):
+ 
+    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False, bulkCacheUpdates=False, cacheUpdates=None):
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
@@ -143,19 +170,24 @@ class cqazapipytools:
             self.count += 1
             print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
             if action_usecache:
-                self.saveCache(url, method, in_json, response.json())
+                if bulkCacheUpdates:
+                    cacheUpdates.append((url, method, in_json, response.json()))
+                else:
+                    self.saveCache(url, method, in_json, response.json())
             return response.json()
 
-    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False):
+    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False, bulkCacheUpdates=False):
         bulk_starttime = time.time()
         self.count = 0
         results = []
+        cacheUpdates = []
+
         if len(in_list) == 0:
             return results
         if method == 'GET':
             maxsize = 1
         if len(in_list) < maxsize:
-            results = self.apiAction(url, method, in_list)
+            results = self.apiAction(url, method, in_list, usecache=usecache, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
         else:
             chunks = self.chunkList(in_list, maxsize)
             self.total = len(chunks)
@@ -166,7 +198,8 @@ class cqazapipytools:
                 while True:
                     try:
                         chunk = q.get(block=False)
-                        result = self.apiAction(url, method, chunk, usecache, noarray)
+                        result = self.apiAction(url, method, chunk, usecache=usecache, noarray=noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+
                         if isinstance(result, list):
                             results.extend(result)
                         else:
@@ -179,6 +212,11 @@ class cqazapipytools:
                 for future in as_completed(futures):
                     future.result()
         self.total = 0
+
+        # Write all cache updates in bulk if enabled
+        if bulkCacheUpdates and len(cacheUpdates) > 0:
+            self.saveCacheBulk(cacheUpdates)
+
         bulk_endtime = time.time()
         print(f"API bulk request for {len(in_list)} items to {method.upper()} {url} succeeded in {str(round(float(bulk_endtime-bulk_starttime),3))}s")
         return results
