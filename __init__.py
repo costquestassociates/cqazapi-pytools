@@ -198,7 +198,7 @@ class cqazapipytools:
                 while True:
                     try:
                         chunk = q.get(block=False)
-                        result = self.apiAction(url, method, chunk, usecache=usecache, noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+                        result = self.apiAction(url, method, chunk, usecache=usecache, noarray=noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
 
                         if isinstance(result, list):
                             results.extend(result)
