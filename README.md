@@ -38,6 +38,8 @@ git clone https://github.com/costquestassociates/cqazapi-pytools cqazapipytools
 
 ### Requirements
 
+Make sure to install the required packages from the `requirements.txt` file. If you are deploying using GitHub Actions, ensure the dependencies from this file are being installed. Errors relating to deployment are very common due to missing requirements.
+
 ```bash
 pip install -r cqazapipytools/requirements.txt
 ```
