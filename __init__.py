@@ -12,6 +12,7 @@ import os
 import hashlib
 from flatten_json import flatten
 import csv
+import copy
 from collections import OrderedDict
 from contextlib import closing
 
@@ -241,27 +242,28 @@ class cqazapipytools:
         return in_list1
     
     def transformList(self, in_list, mode, keys):
+        out_list = copy.deepcopy(in_list)
         mode = mode.lower()
         if mode == 'select':
-            for il in in_list:
+            for il in out_list:
                 for k in list(il.keys()):
                     if not k in keys:
                         il.pop(k)
         elif mode == 'drop':
-            for il in in_list:
+            for il in out_list:
                 for k in list(il.keys()):
                     if k in keys:
                         il.pop(k)
         elif mode == 'rename':
             if type(keys) != dict:
                 raise Exception("transformList() requires key value pairs of type dict for mode=rename")
-            for il in in_list:
+            for il in out_list:
                 for k in list(il.keys()):
                     if k in keys.keys():
                         il[keys[k]] = il.pop(k)
         else:
             raise Exception("Unsupported mode")
-        return in_list
+        return out_list
 
     def flattenList(self, in_list):
         return [flatten(il) for il in in_list]
