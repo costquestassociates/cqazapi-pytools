@@ -279,8 +279,11 @@ class cqazapipytools:
         print(f"Read {len(data)} rows from file {filepath}")
         return data
 
-    def csvWrite(self, filepath, in_list, fields = None):
-        flattened = self.flattenList(in_list)
+    def csvWrite(self, filepath, in_list, fields = None, flatten = True):
+        if flatten:
+            flattened = self.flattenList(in_list)
+        else:
+            flattened = in_list
         fields = []
         for f in flattened:
             for k in f.keys():

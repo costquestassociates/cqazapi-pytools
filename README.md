@@ -165,6 +165,7 @@ Returns a list of dict.
 `csvWrite(filepath, in_list)`
 * `filepath` is a path to a CSV file. Will be overwritten if exists.
 * `in_list` is a list of dict. If the dict contains additional objects (list, dict) they will be modified using the `flattenList()` function.
+* `flatten` is an optional `True` or `False` parameter (defaults to `True`) that will not perform flattening, meaning the `in_list` must be a list of dict.
 
 
 
