@@ -57,7 +57,7 @@ print(response)
 ```
 
 There are a few options when instantiating:
-`cqazapipytools(apikey, baseurl='https://api.costquest.com/', cachepath=None)`
+`cqazapipytools(apikey, baseurl='https://api.costquest.com/', cachepath=None, maxretries=3)`
 * Must provide a valid CostQuest API key.
 * Leave baseurl as default, typically.
 * `cachepath` defines the path to a cache file. Example being `cachepath='C:\Temp\cache.db'` on windows or `cachepath='~/cache.db'` on linux.
@@ -67,6 +67,7 @@ There are a few options when instantiating:
   * If input data stays the same, PyTools will attempt to sort and make similar requests to increase cache hits. If the input data changes, there may be no cache hits. Single requests to `GET` endpoints are more likely to generate cache hits.
   * The cache can become very large. Consider having different cache files for different projects. Also consider using `clearCache()` or simply dropping the sqlite file when no longer needed.
   * If `usecache=False` for the `apiaction()` or `bulkApiAction()` functions that particular request or set of requests will skip caching, otherwise the global `usecache` setting will be used which is set to True when `cachepath` is provided.
+* `maxretries` defines the global number of retries to attempt for failed requests.
 
 
 
@@ -83,10 +84,11 @@ Certain functions re-use the same input parameters.
 
 ### apiAction
 
-`apiAction(url, method, body, usecache=None, bulkCacheUpdates=False, cacheUpdates=None)`
+`apiAction(url, method, body, usecache=None, bulkCacheUpdates=False, cacheUpdates=None, maxRetries=None)`
 * `body` is a python object being of type `list` or `dict` mirroring the JSON types of `array` and `object`. If `body` is provided for a `GET` request, it should be a dictionary and will be converted to query string parameters.
 * `bulkCacheUpdates` defaults to `False`. When set to `True`, cache writes are deferred and collected in the `cacheUpdates` array instead of being written immediately. This improves performance for bulk operations by batching cache writes into a single database transaction.
 * `cacheUpdates` is a list that collects cache entries when `bulkCacheUpdates=True`. Each entry is a tuple of `(url, method, data, response)`. This array is populated by `apiAction` and consumed by `bulkApiAction` for batch cache writing. Should be passed as an empty list `[]` when using bulk cache updates.
+* `maxRetries` defines the number of retry attempts for failed requests. This will override the global setting if provided.
 
 Returns an API response-like object.
 

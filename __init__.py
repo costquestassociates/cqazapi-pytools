@@ -18,7 +18,7 @@ from contextlib import closing
 
 class cqazapipytools:
 
-    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', cachepath = None):
+    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', cachepath = None, maxretries = 3):
         self.apikey = apikey
         self.baseurl = baseurl
         self.sessionpool = queue.Queue()
@@ -26,6 +26,7 @@ class cqazapipytools:
         self.total = 0
         self.cachepath = cachepath
         self.usecache = False
+        self.maxretries = maxretries
         if not cachepath == None:
             self.usecache = True
             self.createCache()
@@ -116,14 +117,17 @@ class cqazapipytools:
         return hashlib.sha1(hashstr.encode()).hexdigest()
 
  
-    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False, bulkCacheUpdates=False, cacheUpdates=None):
+    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False, bulkCacheUpdates=False, cacheUpdates=None, maxRetries=None):
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
         starttime = time.time()
-        adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
+        curr_maxretries = self.maxretries
+        if maxRetries != None:
+            curr_maxretries = maxRetries
+        adapter = HTTPAdapter(max_retries=Retry(total=curr_maxretries, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
