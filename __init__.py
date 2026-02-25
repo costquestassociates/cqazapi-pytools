@@ -10,11 +10,33 @@ import sqlite3
 import json
 import os
 import hashlib
-from flatten_json import flatten
 import csv
 import copy
 from collections import OrderedDict
 from contextlib import closing
+
+def flatten(nested, separator="_", root_keys_to_ignore=None):
+    out = {}
+    if root_keys_to_ignore is None:
+        root_keys_to_ignore = set()
+
+    def _flatten(obj, parent_key=""):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if parent_key == "" and k in root_keys_to_ignore:
+                    continue
+                new_key = f"{parent_key}{separator}{k}" if parent_key else str(k)
+                _flatten(v, new_key)
+        elif isinstance(obj, list):
+            for i, v in enumerate(obj):
+                new_key = f"{parent_key}{separator}{i}" if parent_key else str(i)
+                _flatten(v, new_key)
+        else:
+            out[parent_key] = obj
+
+    _flatten(nested)
+    return out
+
 
 class cqazapipytools:
 
@@ -228,6 +250,7 @@ class cqazapipytools:
 
     def chunkList(self, list, size):
         return [list[i:i + size] for i in range(0, len(list), size)]
+
 
     def mergeList(self, in_list1, in_list2, key_name):
         keys2 = {}

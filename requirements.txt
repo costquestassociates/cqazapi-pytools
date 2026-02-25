@@ -1,5 +1,4 @@
 requests
 urllib3
-flatten_json
 cryptography
 pyjwt[crypto]
