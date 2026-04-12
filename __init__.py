@@ -145,7 +145,7 @@ class cqazapipytools:
             action_usecache = usecache
         if 'http' not in url:
             url = f"{self.baseurl}{url}"
-        starttime = time.time()
+        starttime = time.perf_counter()
         curr_maxretries = self.maxretries
         if maxRetries != None:
             curr_maxretries = maxRetries
@@ -167,7 +167,7 @@ class cqazapipytools:
         if action_usecache:
             cache_result = self.loadCache(url, method, in_json)
             if not cache_result is None:
-                endtime = time.time()
+                endtime = time.perf_counter()
                 self.count += 1
                 print(f"API request ({self.count}/{self.total}) to CACHE {url} succeeded in {str(round(float(endtime-starttime),3))}s")
                 return cache_result
@@ -193,7 +193,7 @@ class cqazapipytools:
             print(f'API request failed with status code {response.status_code} and message {response.text} \n url: {url} \n method: {method} \n body: {in_json}')
         else:
             self.sessionpool.put(session)
-            endtime = time.time()
+            endtime = time.perf_counter()
             self.count += 1
             print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
             if action_usecache:
@@ -204,7 +204,7 @@ class cqazapipytools:
             return response.json()
 
     def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False, bulkCacheUpdates=False):
-        bulk_starttime = time.time()
+        bulk_starttime = time.perf_counter()
         self.count = 0
         results = []
         cacheUpdates = []
@@ -244,7 +244,7 @@ class cqazapipytools:
         if bulkCacheUpdates and len(cacheUpdates) > 0:
             self.saveCacheBulk(cacheUpdates)
 
-        bulk_endtime = time.time()
+        bulk_endtime = time.perf_counter()
         print(f"API bulk request for {len(in_list)} items to {method.upper()} {url} succeeded in {str(round(float(bulk_endtime-bulk_starttime),3))}s")
         return results
 
