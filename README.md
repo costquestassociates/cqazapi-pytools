@@ -212,13 +212,14 @@ Attaches data attributes to a list of `uuid`s.
 
 ### locate
 
-`locate(vintage, in_list, *opt_tolerance, *parceldistancem, *neardistancem, *parceltolerancem, *footprinttolerancem)`
+`locate(vintage, in_list, *opt_tolerance, *parceldistancem, *neardistancem, *parceltolerancem, *footprinttolerancem, *matchtype)`
 * `in_list` is a list of form `[{'sourcekey':'unique id','latitude':0,'longitude':0}]`.
 * `opt_tolerance` is a value between 0 and 1. It defaults to 0.5.
 * `parceldistancem` see API documentation.
 * `neardistancem` see API documentation.
 * `parceltolerancem` see API documentation.
 * `footprinttolerancem` see API documentation.
+* `matchtype` is a comma delimited list of matchtypes to utilize. Valid values are `FootprintParcel`, `Footprint`, `Parcel`, `Nearest`.
 
 Returns a list of dict.
 

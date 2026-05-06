@@ -410,7 +410,7 @@ class cqazapipytools:
                 merge_list = results[0]
             return sorted(merge_list, key=lambda u: u['uuid'])
     
-    def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, parceltolerancem = None, footprinttolerancem = None, workers=4):
+    def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, parceltolerancem = None, footprinttolerancem = None, matchtype = None, workers=4):
         for l in in_list:
             l['res'] = 4
         h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, self.getMaxRequest('geosvc','h3assign'), 8), 'sourcekey')
@@ -429,9 +429,11 @@ class cqazapipytools:
         if not neardistancem is None:
             qs['neardistancem'] = neardistancem
         if not parceltolerancem is None:
-            qs['neardistancem'] = parceltolerancem
+            qs['parceltolerancem'] = parceltolerancem
         if not footprinttolerancem is None:
-            qs['neardistancem'] = footprinttolerancem
+            qs['footprinttolerancem'] = footprinttolerancem
+        if not matchtype is None:
+            qs['matchtype'] = matchtype
         q = ''
         if len(qs) > 0:
             q = '?'
