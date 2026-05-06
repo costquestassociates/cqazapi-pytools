@@ -355,10 +355,10 @@ class cqazapipytools:
         else:
             return fields
 
-    def collect(self, vintage, geojson):
+    def collect(self, vintage, geojson, layer = 'locations'):
         results = []
         def doCollect(geojson):
-            curr_result = self.apiAction(self.baseurl + f'fabric/{vintage}/collect2', 'POST', geojson)
+            curr_result = self.apiAction(self.baseurl + f'fabric/{vintage}/collect2?layer=' + layer, 'POST', geojson)
             if len(curr_result['continuations']) > 0:
                 for c in curr_result['continuations']:
                     doCollect(c['body'])
