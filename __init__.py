@@ -149,7 +149,7 @@ class cqazapipytools:
         curr_maxretries = self.maxretries
         if maxRetries != None:
             curr_maxretries = maxRetries
-        adapter = HTTPAdapter(max_retries=Retry(total=curr_maxretries, backoff_factor=1, status_forcelist=[401, 403, 500, 502, 503, 504], allowed_methods=['GET','POST']))
+        adapter = HTTPAdapter(max_retries=Retry(total=curr_maxretries, backoff_factor=1, status_forcelist=[401, 403, 408, 500, 502, 503, 504], allowed_methods=['GET','POST']))
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
