@@ -40,7 +40,7 @@ def flatten(nested, separator="_", root_keys_to_ignore=None):
 
 class cqazapipytools:
 
-    def __init__(self, apikey, baseurl = 'https://api.costquest.com/', cachepath = None, maxretries = 3):
+    def __init__(self, apikey:str, baseurl:str = 'https://api.costquest.com/', cachepath:str = None, maxretries:int = 3, quietmode:bool = False):
         self.apikey = apikey
         self.baseurl = baseurl
         self.sessionpool = queue.Queue()
@@ -49,6 +49,7 @@ class cqazapipytools:
         self.cachepath = cachepath
         self.usecache = False
         self.maxretries = maxretries
+        self.quietmode = quietmode
         if not cachepath == None:
             self.usecache = True
             self.createCache()
@@ -169,7 +170,8 @@ class cqazapipytools:
             if not cache_result is None:
                 endtime = time.perf_counter()
                 self.count += 1
-                print(f"API request ({self.count}/{self.total}) to CACHE {url} succeeded in {str(round(float(endtime-starttime),3))}s")
+                if not self.quietmode:
+                    print(f"API request ({self.count}/{self.total}) to CACHE {url} succeeded in {str(round(float(endtime-starttime),3))}s")
                 return cache_result
         if method.upper() == 'GET':
             response = session.get(url)
@@ -189,13 +191,14 @@ class cqazapipytools:
                     return self.apiAction(url, method, in_json[0])
                 else:
                     return self.apiAction(url, method, in_json)
-        elif response.status_code != 200:
+        elif response.status_code >= 400:
             print(f'API request failed with status code {response.status_code} and message {response.text} \n url: {url} \n method: {method} \n body: {in_json}')
         else:
             self.sessionpool.put(session)
             endtime = time.perf_counter()
             self.count += 1
-            print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
+            if not self.quietmode:
+                print(f"API request ({self.count}/{self.total}) to {method.upper()} {url} succeeded in {str(round(float(endtime-starttime),3))}s")
             if action_usecache:
                 if bulkCacheUpdates:
                     cacheUpdates.append((url, method, in_json, response.json()))
