@@ -140,7 +140,7 @@ class cqazapipytools:
         return hashlib.sha1(hashstr.encode()).hexdigest()
 
  
-    def apiAction(self, url, method, in_json=None, usecache=None, noarray=False, bulkCacheUpdates=False, cacheUpdates=None, maxRetries=None):
+    def apiAction(self, url, method = 'GET', in_json=None, usecache=None, noarray=False, bulkCacheUpdates=False, cacheUpdates=None, maxRetries=None):
         action_usecache = self.usecache
         if not usecache is None:
             action_usecache = usecache
