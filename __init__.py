@@ -314,11 +314,12 @@ class cqazapipytools:
             flattened = self.flattenList(in_list)
         else:
             flattened = in_list
-        fields = []
-        for f in flattened:
-            for k in f.keys():
-                if k not in fields:
-                    fields.append(k)
+        if fields == None and flatten == True:
+            fields = []
+            for f in flattened:
+                for k in f.keys():
+                    if k not in fields:
+                        fields.append(k)
         with open(filepath, 'w', newline='', encoding="utf-8") as csvfile:
             if fields != None:
                 fieldnames = fields
