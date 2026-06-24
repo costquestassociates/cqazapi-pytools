@@ -351,11 +351,12 @@ class cqazapipytools:
             
     def getFields(self, vintage, layer, datalevel=None, list_only=False):
         fields = self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)
+        
+        if datalevel:
+            fields = [f for f in fields if f['datalevel'] <= datalevel]
+
         if list_only == True:
-            if datalevel:
-                return [f['fieldname'] for f in fields if f['datalevel'] == datalevel]
-            else:
-                return [f['fieldname'] for f in fields]
+            return [f['fieldname'] for f in fields]
         else:
             return fields
 
