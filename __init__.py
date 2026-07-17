@@ -216,10 +216,13 @@ class cqazapipytools:
             return results
         if method == 'GET':
             maxsize = 1
-        if len(in_list) < maxsize:
+        if maxsize is not None and len(in_list) < maxsize:
             results = self.apiAction(url, method, in_list, usecache=usecache, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
         else:
-            chunks = self.chunkList(in_list, maxsize)
+            if maxsize is not None:
+                chunks = self.chunkList(in_list, maxsize)
+            else:
+                chunks = in_list
             self.total = len(chunks)
             q = queue.Queue()
             for chunk in chunks:
@@ -229,7 +232,6 @@ class cqazapipytools:
                     try:
                         chunk = q.get(block=False)
                         result = self.apiAction(url, method, chunk, usecache=usecache, noarray=noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
-
                         if isinstance(result, list):
                             results.extend(result)
                         else:
@@ -360,6 +362,7 @@ class cqazapipytools:
             return fields
 
     def collect(self, vintage, geojson, layer = 'locations'):
+        pcs = time.perf_counter()
         results = []
         def doCollect(geojson):
             curr_result = self.apiAction(self.baseurl + f'fabric/{vintage}/collect3/{layer}', 'POST', geojson)
@@ -369,9 +372,11 @@ class cqazapipytools:
             else:
                 results.extend(curr_result['data'])
         doCollect(geojson)
+        print(f'collect() completed in {time.perf_counter() - pcs:.4f}s')
         return sorted(list(set(results)))
     
     def attach(self, vintage, in_list, fields=None, layer='locations', datalevel=None, workers=4):
+        pcs = time.perf_counter()
         if fields == None and datalevel == None:
             raise Exception("attach() requires either fields or datalevel be passed")
         if datalevel:
@@ -396,6 +401,7 @@ class cqazapipytools:
                 for k in list(r.keys()):
                     if k not in fields:
                         r.pop(k, None)
+            print(f'attach() completed in {time.perf_counter() - pcs:.4f}s')
             return sorted(results, key=lambda u: u['uuid'])
         else:
             fieldgroups = self.chunkList(fields, 5)
@@ -412,9 +418,11 @@ class cqazapipytools:
                         merge_list = self.mergeList(merge_list, results[r], 'uuid')
             else:
                 merge_list = results[0]
+            print(f'attach() completed in {time.perf_counter() - pcs:.4f}s')
             return sorted(merge_list, key=lambda u: u['uuid'])
     
     def locate(self, vintage, in_list, opt_tolerance = 0.5, parceldistancem = None, neardistancem = None, parceltolerancem = None, footprinttolerancem = None, matchtype = None, workers=4):
+        pcs = time.perf_counter()
         for l in in_list:
             l['res'] = 4
         h3_assign = self.mergeList(in_list, self.bulkApiAction('geosvc/h3assign', 'POST', in_list, self.getMaxRequest('geosvc','h3assign'), 8), 'sourcekey')
@@ -443,24 +451,30 @@ class cqazapipytools:
             q = '?'
         credit_cost = self.getCredits('fabricext','locate','POST')
         single_requests = []
+        bulk_requests = []
         for h3u in h3_unique:
             if len(h3_unique[h3u]) < credit_cost * opt_tolerance:
                 for r in h3_unique[h3u]:
                     single_requests.append(r)
             else:
-                results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', h3_unique[h3u], self.getMaxRequest('fabricext','locate'), workers))
+                bulk_requests.extend(self.chunkList(h3_unique[h3u],1000))
+        results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'POST', bulk_requests, None, workers))
         results.extend(self.bulkApiAction(f"{self.baseurl}fabricext/{vintage}/locate{q}{urllib.parse.urlencode(qs)}", 'GET', single_requests, 1, workers))
+        print(f'locate() completed in {time.perf_counter() - pcs:.4f}s')
         return sorted(results,key=lambda u: u.get('sourcekey',''))
 
     def match(self, vintage, in_list, workers=16):
+        pcs = time.perf_counter()
         results = []
         if len(in_list) * self.getCredits('fabricext','match','GET') < self.getCredits('fabricext','match','POST'):
             results = self.bulkApiAction(f'fabricext/{vintage}/match', 'GET', in_list, 1, workers)
         else:
             results = self.bulkApiAction(f'fabricext/{vintage}/match', 'POST', in_list, self.getMaxRequest('fabricext','match'), workers)
+        print(f'match() completed in {time.perf_counter() - pcs:.4f}s')
         return results
 
     def convert(self, filepath):
+        pcs = time.perf_counter()
         url = f'{self.baseurl}geosvc/convert'
         with open(filepath, 'rb') as file:
             files = {'file': file}
@@ -469,5 +483,5 @@ class cqazapipytools:
             print(f'convert failed with status code {response.status_code} and message {response.text} \n url: {url} \n filepath: {filepath}')
             raise Exception(f'Error converting file: {filepath}')
         else:
-            print(f'Conversion of file {filepath} succeeded')
+            print(f'convert() completed in {time.perf_counter() - pcs:.4f}s')
             return response.json()
