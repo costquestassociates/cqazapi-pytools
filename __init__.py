@@ -150,7 +150,7 @@ class cqazapipytools:
         curr_maxretries = self.maxretries
         if maxRetries != None:
             curr_maxretries = maxRetries
-        adapter = HTTPAdapter(max_retries=Retry(total=curr_maxretries, backoff_factor=1, status_forcelist=[401, 403, 408, 500, 502, 503, 504], allowed_methods=['GET','POST']))
+        adapter = HTTPAdapter(max_retries=Retry(respect_retry_after_header=False,total=curr_maxretries, backoff_factor=1, status_forcelist=[401, 403, 408, 500, 502, 503, 504], allowed_methods=['GET','POST']))
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
@@ -353,6 +353,10 @@ class cqazapipytools:
             
     def getFields(self, vintage, layer, datalevel=None, list_only=False):
         fields = self.apiAction(f'fabric/{vintage}/fields/{layer}', 'GET', usecache=False)
+        
+        if datalevel:
+            fields = [f for f in fields if f['datalevel'] <= datalevel]
+
         if list_only == True:
             if datalevel:
                 return [f['fieldname'] for f in fields if f['datalevel'] <= datalevel]
