@@ -54,6 +54,7 @@ class cqazapipytools:
             self.usecache = True
             self.createCache()
         self.listapis = self.apiAction('accountcontrol/listapis', 'GET', usecache=False)
+        self.failedrequests = []
 
     def __enter__(self):
         return self
@@ -150,7 +151,13 @@ class cqazapipytools:
         curr_maxretries = self.maxretries
         if maxRetries != None:
             curr_maxretries = maxRetries
-        adapter = HTTPAdapter(max_retries=Retry(respect_retry_after_header=False,total=curr_maxretries, backoff_factor=1, status_forcelist=[401, 403, 408, 500, 502, 503, 504], allowed_methods=['GET','POST']))
+        adapter = HTTPAdapter(max_retries=Retry(
+            respect_retry_after_header=False,
+            total=curr_maxretries,
+            backoff_factor=1,
+            status_forcelist=[401, 403, 408, 500, 502, 503, 504], 
+            allowed_methods=['GET','POST']
+        ))
         if self.sessionpool.empty():
             session = requests.Session()
             session.mount('https://', adapter)
@@ -206,9 +213,10 @@ class cqazapipytools:
                     self.saveCache(url, method, in_json, response.json())
             return response.json()
 
-    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False, bulkCacheUpdates=False):
+    def bulkApiAction(self, url, method, in_list, maxsize, workers=4, usecache=None, noarray=False, bulkCacheUpdates=False, ignoreerrors=False):
         bulk_starttime = time.perf_counter()
         self.count = 0
+        self.failedrequests = []
         results = []
         cacheUpdates = []
 
@@ -217,7 +225,13 @@ class cqazapipytools:
         if method == 'GET':
             maxsize = 1
         if maxsize is not None and len(in_list) < maxsize:
-            results = self.apiAction(url, method, in_list, usecache=usecache, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+            try:
+                results = self.apiAction(url, method, in_list, usecache=usecache, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+            except requests.exceptions.RequestException as e:
+                if not ignoreerrors:
+                    raise
+                self.failedrequests.append({'url': url, 'method': method, 'body': in_list, 'error': str(e)})
+                results = []
         else:
             if maxsize is not None:
                 chunks = self.chunkList(in_list, maxsize)
@@ -231,7 +245,14 @@ class cqazapipytools:
                 while True:
                     try:
                         chunk = q.get(block=False)
-                        result = self.apiAction(url, method, chunk, usecache=usecache, noarray=noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+                        try:
+                            result = self.apiAction(url, method, chunk, usecache=usecache, noarray=noarray, bulkCacheUpdates=bulkCacheUpdates, cacheUpdates=cacheUpdates)
+                        except requests.exceptions.RequestException as e:
+                            if not ignoreerrors:
+                                raise
+                            self.failedrequests.append({'url': url, 'method': method, 'body': chunk, 'error': str(e)})
+                            q.task_done()
+                            continue
                         if isinstance(result, list):
                             results.extend(result)
                         else:
