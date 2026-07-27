@@ -98,10 +98,11 @@ This is used to make a single API call.
 
 ### bulkApiAction
 
-`bulkApiAction(url, method, in_list, maxsize, *workers, *usecache,  *bulkCacheUpdates)`
+`bulkApiAction(url, method, in_list, maxsize, *workers=4, *usecache,  *bulkCacheUpdates, *ignoreerrors)`
 * `in_list` must be a list of items. It can be of any size.
 * `maxsize` is the maximum number of items to request at once. If performing `GET` requests this will be made 1 regardless of what is passed in.
 * `bulkCacheUpdates` defaults to `False`. When set to `True`, enables batch cache writing for improved performance. All cache updates from individual API calls are collected and written to the cache database in a single transaction at the end of the bulk operation. This significantly reduces database I/O overhead for large bulk operations.
+* `ignoreerrors` is a boolean value that defaults to `False`. When `True` the `failedrequests` list will be populated and can be checked/accessed in the calling code. This will help prevent single errors in large bulk requests from stopping processing, but it's imperative that the client checks for `failedrequests`.
 
 Returns a list.
 
