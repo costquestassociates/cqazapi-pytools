@@ -15,6 +15,8 @@ import copy
 from collections import OrderedDict
 from contextlib import closing
 
+csv.field_size_limit(100000000)
+
 def flatten(nested, separator="_", root_keys_to_ignore=None):
     out = {}
     if root_keys_to_ignore is None:
