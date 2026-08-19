@@ -382,7 +382,7 @@ class cqazapipytools:
 
         if list_only == True:
             if datalevel:
-                return [f['fieldname'] for f in fields]
+                return [f['fieldname'] for f in fields if f['datalevel'] <= datalevel]
             else:
                 return [f['fieldname'] for f in fields]
         else:
