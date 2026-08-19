@@ -382,7 +382,7 @@ class cqazapipytools:
 
         if list_only == True:
             if datalevel:
-                return [f['fieldname'] for f in fields if f['datalevel'] <= datalevel]
+                return [f['fieldname'] for f in fields]
             else:
                 return [f['fieldname'] for f in fields]
         else:
@@ -410,8 +410,9 @@ class cqazapipytools:
             fields = []
             apifields = self.getFields(vintage, layer)
             for af in apifields:
-                if af['datalevel'] <= datalevel and af['fieldname'] != 'uuid':
+                if af['datalevel'] <= datalevel:
                     fields.append(af['fieldname'])
+        fields = [x for x in fields if x != 'uuid']
         in_list = sorted(list(set([i for i in in_list if i is not None])))
         merge_list = []
         if self.getCredits('fabric','data','GET') * len(in_list) < self.getCredits('fabric','bulk','POST') * math.ceil(len(fields)/5) * math.ceil(len(in_list)/self.getMaxRequest('fabric','bulk')):
