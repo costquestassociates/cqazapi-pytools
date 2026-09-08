@@ -15,6 +15,7 @@ sdist/
 *.whl
 pip-log.txt
 pip-delete-this.txt
+*:Zone.Identifier
 
 # Environments
 .venv/
