@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cqazapipytools"
+version = "0.1.0"
+authors = [
+  { name="CostQuest Associates" }
+]
+description = "A python class providing easier access to CostQuest APIs"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests","urllib3"
+]
+
+[tool.setuptools]
+py-modules = ["__init__"]
