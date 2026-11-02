@@ -388,11 +388,14 @@ class cqazapipytools:
         else:
             return fields
 
-    def collect(self, vintage, geojson, layer = 'locations'):
+    def collect(self, vintage, geojson, layer = 'locations', filter = None):
         pcs = time.perf_counter()
         results = []
+        url = self.baseurl + f'fabric/{vintage}/collect3/{layer}'
+        if filter is not None:
+            url += "?filter=" + urllib.parse.urlencode(filter)
         def doCollect(geojson):
-            curr_result = self.apiAction(self.baseurl + f'fabric/{vintage}/collect3/{layer}', 'POST', geojson)
+            curr_result = self.apiAction(url, 'POST', geojson)
             if len(curr_result['continuations']) > 0:
                 for c in curr_result['continuations']:
                     doCollect(c['body'])
