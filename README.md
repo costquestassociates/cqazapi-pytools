@@ -191,10 +191,13 @@ Returns a python object.
 
 ### collect
 
-`collect(vintage, geojson)`
+`collect(vintage, geojson, layer='locations', filter=None)`
 * `geojson` is a valid GeoJSON object.
+* `layer` is a valid fabric data layer as defined by the `fabric/layers` API.
+* `filter` is an OData style filter to limit the UUIDs returned to those matching the provided filter.
+  * `building_type_code eq 'R'` filters to where `building_type_code` is `R`.
 
-Returns a list of all fabric `uuid`s that fall within the given geojson object.
+Returns a list of all fabric `uuid`s in a layer that fall within the given geojson object matching the optional filter.
 
 
 

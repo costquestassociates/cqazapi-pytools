@@ -393,7 +393,7 @@ class cqazapipytools:
         results = []
         url = self.baseurl + f'fabric/{vintage}/collect3/{layer}'
         if filter is not None:
-            url += "?filter=" + urllib.parse.urlencode(filter)
+            url += "?" + urllib.parse.urlencode({'filter': filter})
         def doCollect(geojson):
             curr_result = self.apiAction(url, 'POST', geojson)
             if len(curr_result['continuations']) > 0:
